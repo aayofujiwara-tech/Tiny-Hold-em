@@ -913,6 +913,217 @@ html, body {
   #action-bar { padding: 6px 10px; padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
   .action-btn { padding: 10px 16px; min-height: 46px; }
 }
+/* ===== Tutorial / How-to-Play ===== */
+#tutorial-screen {
+  position: absolute;
+  inset: 0;
+  background: rgba(10,22,40,0.98);
+  display: none;
+  flex-direction: column;
+  z-index: 110;
+}
+#tutorial-screen.visible { display: flex; }
+
+#tutorial-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  flex-shrink: 0;
+}
+#tutorial-back {
+  font-family: 'Crimson Pro', serif;
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  touch-action: manipulation;
+}
+#tutorial-page-num {
+  font-family: 'Crimson Pro', serif;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+#tutorial-progress {
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  flex-shrink: 0;
+  margin: 0 14px;
+  border-radius: 2px;
+}
+#tutorial-progress-bar {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+#tutorial-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+.tutorial-step {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  text-align: center;
+  gap: 10px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.tutorial-step.active {
+  display: flex;
+  opacity: 1;
+}
+.tutorial-step h3 {
+  font-family: 'Pirata One', cursive;
+  font-size: 1.3rem;
+  color: var(--gold);
+  text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+.tutorial-step p, .tutorial-step .tut-text {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--text);
+  max-width: 320px;
+}
+.tut-highlight {
+  color: var(--gold);
+  font-weight: 700;
+}
+.tut-dim { color: var(--text-dim); font-size: 0.82rem; }
+.tut-cards-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 6px 0;
+}
+.tut-cards-row .card { width: 48px; height: 68px; }
+.tut-cards-row .card-front .card-suit { font-size: 1.3rem; }
+.tut-cards-row .card-front .card-rank { font-size: 1.05rem; }
+.tut-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+.tut-flow-item {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  padding: 5px 14px;
+  width: 200px;
+  text-align: center;
+}
+.tut-flow-arrow { color: var(--text-dim); font-size: 0.75rem; }
+.tut-action-list {
+  text-align: left;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  max-width: 290px;
+}
+.tut-action-name {
+  font-weight: 700;
+  color: var(--gold);
+}
+.tut-hand-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 310px;
+}
+.tut-hand-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+}
+.tut-hand-rank {
+  font-family: 'Pirata One', cursive;
+  font-size: 0.9rem;
+  color: var(--gold);
+  min-width: 28px;
+  text-align: right;
+}
+.tut-hand-name {
+  min-width: 68px;
+  font-weight: 700;
+}
+.tut-hand-cards {
+  display: flex;
+  gap: 3px;
+}
+.tut-hand-cards .card { width: 32px; height: 46px; }
+.tut-hand-cards .card-front .card-suit { font-size: 0.9rem; }
+.tut-hand-cards .card-front .card-rank { font-size: 0.75rem; }
+.tut-mode-block {
+  text-align: left;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  max-width: 300px;
+  border-left: 3px solid var(--gold-dim);
+  padding-left: 10px;
+  margin: 2px 0;
+}
+.tut-mode-title {
+  font-weight: 700;
+  color: var(--gold);
+}
+
+#tutorial-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 14px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  flex-shrink: 0;
+  gap: 10px;
+}
+.tut-nav-btn {
+  font-family: 'Pirata One', cursive;
+  font-size: 1rem;
+  padding: 10px 20px;
+  border: 2px solid var(--gold-dim);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  min-width: 90px;
+  text-align: center;
+  touch-action: manipulation;
+}
+.tut-nav-btn.primary {
+  border-color: var(--gold);
+  background: linear-gradient(180deg, #f0c040, #c09020);
+  color: var(--bg);
+}
+
+/* Tutorial start-screen button */
+#btn-howto {
+  font-family: 'Pirata One', cursive;
+  font-size: 1rem;
+  padding: 10px 24px;
+  border: 2px solid var(--gold-dim);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--gold);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
 </style>
 </head>
 <body>
@@ -1023,6 +1234,7 @@ html, body {
   <div id="start-screen">
     <h2>🏴‍☠️ タイニーホールデム</h2>
     <p>海賊たちのミニポーカー！</p>
+    <button id="btn-howto">🎮 遊び方</button>
 
     <!-- Step 1: VS Mode -->
     <div id="step1" class="step-area">
@@ -1074,6 +1286,101 @@ html, body {
     </div>
 
     <button class="pirate-btn" id="btn-start" disabled>出航する！</button>
+  </div>
+
+  <!-- Tutorial Screen -->
+  <div id="tutorial-screen">
+    <div id="tutorial-header">
+      <button id="tutorial-back">← もどる</button>
+      <span id="tutorial-page-num">1 / 7</span>
+    </div>
+    <div id="tutorial-progress"><div id="tutorial-progress-bar" style="width:14.28%"></div></div>
+
+    <div id="tutorial-body">
+      <!-- STEP 1 -->
+      <div class="tutorial-step active" data-step="0">
+        <h3>🏴‍☠️ ようこそ！</h3>
+        <p>海賊たちのミニポーカーゲーム！</p>
+        <p>カードは<span class="tut-highlight">2枚だけ</span>。<br>自分の手札1枚と、みんなが見られる<br>コミュニティカード1枚を合わせて<br>強い役を作ろう！</p>
+        <p class="tut-dim">チップをかけて、相手より強い役を出せば勝ち！</p>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="tutorial-step" data-step="1">
+        <h3>🃏 カードを知ろう</h3>
+        <p>カードは全部で<span class="tut-highlight">15枚</span></p>
+        <p>マーク（スート）は3種類：</p>
+        <div class="tut-cards-row" id="tut-suit-cards"></div>
+        <p>💀 骸骨（赤）  ⚓ 錨（黒）  🪙 金貨（青）</p>
+        <p>数字は<span class="tut-highlight">A &gt; K &gt; Q &gt; J &gt; 10</span>の5種類<br>各マーク5枚 × 3マーク = 15枚</p>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="tutorial-step" data-step="2">
+        <h3>🔄 ラウンドの流れ</h3>
+        <div class="tut-flow">
+          <div class="tut-flow-item">① アンティ<br><span class="tut-dim">全員チップを1枚ずつ出す</span></div>
+          <div class="tut-flow-arrow">▼</div>
+          <div class="tut-flow-item">② カード配布<br><span class="tut-dim">手札1枚＋コミュニティ1枚</span></div>
+          <div class="tut-flow-arrow">▼</div>
+          <div class="tut-flow-item">③ ベッティング<br><span class="tut-dim">チップをかけるか決める</span></div>
+          <div class="tut-flow-arrow">▼</div>
+          <div class="tut-flow-item">④ ショーダウン<br><span class="tut-dim">手札公開！強い役の勝ち！</span></div>
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="tutorial-step" data-step="3">
+        <h3>💰 ベッティング</h3>
+        <div class="tut-action-list">
+          <p style="margin-bottom:6px;">誰もベットしていないとき：</p>
+          <p>　<span class="tut-action-name">チェック</span> → パス（チップ出さない）<br>
+          　<span class="tut-action-name">ベット</span> → チップを賭ける</p>
+          <p style="margin:6px 0;">相手がベットしているとき：</p>
+          <p>　<span class="tut-action-name">コール</span> → 同じ額を払って続ける<br>
+          　<span class="tut-action-name">レイズ</span> → さらに上乗せして賭ける<br>
+          　<span class="tut-action-name">フォールド</span> → 降りる</p>
+        </div>
+        <p class="tut-dim">フォールドすると賭けたチップは戻らない！<br>でも、これ以上取られずに済む。</p>
+      </div>
+
+      <!-- STEP 5 -->
+      <div class="tutorial-step" data-step="4">
+        <h3>⚔️ 役の強さ</h3>
+        <div class="tut-hand-list" id="tut-hands"></div>
+      </div>
+
+      <!-- STEP 6 -->
+      <div class="tutorial-step" data-step="5">
+        <h3>🎮 ゲームモード</h3>
+        <div class="tut-mode-block">
+          <p><span class="tut-mode-title">⚔️ クイックマッチ（1vs1）</span><br>チップを全部奪ったら勝ち！<br>1回勝負のシンプルなゲーム。</p>
+        </div>
+        <div class="tut-mode-block">
+          <p><span class="tut-mode-title">🪙 金貨バトル（1vs1）</span><br>先に2セット勝った方が勝利！<br>チップを全部奪うとセット獲得。<br>最長3セットの熱い戦い！</p>
+        </div>
+        <div class="tut-mode-block">
+          <p><span class="tut-mode-title">👥 みんなで（3〜5人）</span><br>チップがなくなったら脱落。<br>最後の1人が勝者！</p>
+        </div>
+      </div>
+
+      <!-- STEP 7 -->
+      <div class="tutorial-step" data-step="6">
+        <h3>🏴‍☠️ さあ出航しよう！</h3>
+        <p>まずは「クイックマッチ」で<br>CPUの「ひよっこ」と戦ってみよう！</p>
+        <div class="tut-action-list" style="margin:4px 0;">
+          <p>✅ 役が弱そうならフォールドも大事<br>
+          ✅ コミュニティカードを見て役を判断<br>
+          ✅ チップをうまく使って相手を揺さぶれ！</p>
+        </div>
+        <p class="tut-highlight" style="font-size:1.1rem; margin-top:4px;">いざ、海へ！</p>
+      </div>
+    </div>
+
+    <div id="tutorial-footer">
+      <button class="tut-nav-btn" id="tut-prev">前へ</button>
+      <button class="tut-nav-btn primary" id="tut-next">次へ →</button>
+    </div>
   </div>
 </div>
 
@@ -2348,6 +2655,7 @@ function returnToTitle() {
   document.getElementById('set-result-overlay').classList.remove('visible');
   document.getElementById('hand-guide').classList.remove('visible');
   document.getElementById('game-log').classList.remove('visible');
+  document.getElementById('tutorial-screen').classList.remove('visible');
   disableActions();
   state = null;
   // Reset start screen step selections
@@ -2368,6 +2676,140 @@ function returnToTitle() {
 
 // Next set button (coin battle)
 document.getElementById('btn-next-set').addEventListener('click', startNextSet);
+
+// ===== Tutorial =====
+(function() {
+  const TOTAL_STEPS = 7;
+  let currentStep = 0;
+
+  const screen    = document.getElementById('tutorial-screen');
+  const backBtn   = document.getElementById('tutorial-back');
+  const prevBtn   = document.getElementById('tut-prev');
+  const nextBtn   = document.getElementById('tut-next');
+  const pageNum   = document.getElementById('tutorial-page-num');
+  const progBar   = document.getElementById('tutorial-progress-bar');
+  const steps     = document.querySelectorAll('.tutorial-step');
+
+  function makeCard(suit, rank) {
+    const suitClass = 'suit-' + suit.id;
+    return '<div class="card face-up"><div class="card-inner"><div class="card-face card-back"></div>'
+      + '<div class="card-face card-front ' + suitClass + '">'
+      + '<span class="card-suit">' + suit.emoji + '</span>'
+      + '<span class="card-rank">' + rank + '</span>'
+      + '</div></div></div>';
+  }
+
+  function initCards() {
+    // STEP 2: suit sample cards (A of each suit)
+    const suitCards = document.getElementById('tut-suit-cards');
+    if (suitCards && !suitCards.hasChildNodes()) {
+      suitCards.innerHTML = SUITS.map(s => makeCard(s, 'A')).join('');
+    }
+
+    // STEP 5: hand examples with card visuals
+    const handsEl = document.getElementById('tut-hands');
+    if (handsEl && !handsEl.hasChildNodes()) {
+      const red   = SUITS[0]; // 💀 red
+      const black = SUITS[1]; // ⚓ black
+
+      const hands = [
+        { rank: '1', name: 'ロイヤル',    cards: [{ s: red, r: 'A' }, { s: red, r: 'K' }] },
+        { rank: '2', name: 'ストフラ',    cards: [{ s: red, r: 'J' }, { s: red, r: 'Q' }] },
+        { rank: '3', name: 'バディ',      cards: [{ s: red, r: 'K' }, { s: black, r: 'K' }] },
+        { rank: '4', name: 'フラ',        cards: [{ s: red, r: '10' }, { s: red, r: 'Q' }] },
+        { rank: '5', name: 'スト',        cards: [{ s: red, r: 'Q' }, { s: black, r: 'K' }] },
+        { rank: '6', name: 'ハイカード',  cards: [{ s: red, r: 'A' }, { s: black, r: 'J' }] },
+      ];
+
+      handsEl.innerHTML = hands.map(h =>
+        '<div class="tut-hand-row">'
+        + '<span class="tut-hand-rank">' + h.rank + '位</span>'
+        + '<span class="tut-hand-name">' + h.name + '</span>'
+        + '<span class="tut-hand-cards">' + h.cards.map(c => makeCard(c.s, c.r)).join('') + '</span>'
+        + '</div>'
+      ).join('');
+    }
+  }
+
+  function updateUI() {
+    pageNum.textContent = (currentStep + 1) + ' / ' + TOTAL_STEPS;
+    progBar.style.width = ((currentStep + 1) / TOTAL_STEPS * 100) + '%';
+
+    steps.forEach((el, i) => {
+      if (i === currentStep) {
+        el.classList.add('active');
+      } else {
+        el.classList.remove('active');
+      }
+    });
+
+    // Back button text
+    backBtn.textContent = currentStep === 0 ? '← タイトルへ' : '← もどる';
+
+    // Footer buttons
+    if (currentStep === 0) {
+      prevBtn.style.visibility = 'hidden';
+    } else {
+      prevBtn.style.visibility = 'visible';
+    }
+
+    if (currentStep === TOTAL_STEPS - 1) {
+      nextBtn.textContent = '⚔️ すぐに遊ぶ';
+      nextBtn.classList.add('primary');
+    } else {
+      nextBtn.textContent = '次へ →';
+      nextBtn.classList.add('primary');
+    }
+  }
+
+  function openTutorial() {
+    currentStep = 0;
+    initCards();
+    updateUI();
+    screen.classList.add('visible');
+  }
+
+  function closeTutorial() {
+    screen.classList.remove('visible');
+  }
+
+  // Quick-start: クイックマッチ + CPU1人 + ひよっこ
+  function quickStart() {
+    closeTutorial();
+    selectedVsMode = '1v1';
+    selectedGameMode = 'quick';
+    selectedCpuCount = 1;
+    selectedCpuLevel = 'easy';
+    startGame();
+  }
+
+  document.getElementById('btn-howto').addEventListener('click', openTutorial);
+
+  backBtn.addEventListener('click', () => {
+    if (currentStep === 0) {
+      closeTutorial();
+    } else {
+      currentStep--;
+      updateUI();
+    }
+  });
+
+  prevBtn.addEventListener('click', () => {
+    if (currentStep > 0) {
+      currentStep--;
+      updateUI();
+    }
+  });
+
+  nextBtn.addEventListener('click', () => {
+    if (currentStep < TOTAL_STEPS - 1) {
+      currentStep++;
+      updateUI();
+    } else {
+      quickStart();
+    }
+  });
+})();
 
 </script>
 </body>
