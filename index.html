@@ -89,12 +89,13 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 4px;
   background:
     radial-gradient(ellipse at center, #143820 0%, var(--table) 60%, #091a10 100%);
   border: 3px solid #1a3a20;
   border-radius: 20px;
   margin: 6px 8px;
-  padding: 8px;
+  padding: 8px 8px 6px;
   position: relative;
   overflow: hidden;
   min-height: 0;
@@ -115,16 +116,17 @@ html, body {
 #cpu-area {
   display: flex;
   justify-content: center;
-  gap: 10px;
-  padding: 4px 0 8px;
+  gap: 12px;
+  padding: 2px 0;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .cpu-slot {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
 }
 .cpu-slot.folded { opacity: 0.35; }
 .cpu-slot.eliminated { display: none; }
@@ -150,6 +152,13 @@ html, body {
   font-size: 0.9rem;
   display: flex;
   gap: 1px;
+}
+
+.cpu-bet {
+  font-size: 1rem;
+  color: var(--gold);
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 /* ===== Card Styles ===== */
@@ -237,7 +246,7 @@ html, body {
   align-items: center;
   justify-content: center;
   flex: 1;
-  gap: 6px;
+  gap: 8px;
   min-height: 0;
 }
 
@@ -281,6 +290,9 @@ html, body {
   font-size: 1rem;
   color: var(--text-dim);
   text-align: center;
+  flex-shrink: 0;
+  min-height: 1.3em;
+  z-index: 1;
 }
 
 #hand-result {
@@ -288,7 +300,6 @@ html, body {
   font-size: 1.2rem;
   color: var(--gold);
   text-align: center;
-  min-height: 1.4em;
   display: none;
 }
 #hand-result.visible { display: block; }
@@ -298,8 +309,8 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 6px 0 4px;
+  gap: 2px;
+  padding: 4px 0 2px;
   flex-shrink: 0;
 }
 
@@ -308,6 +319,14 @@ html, body {
   align-items: center;
   gap: 12px;
   font-size: 1rem;
+}
+
+#player-bet-display {
+  font-size: 1rem;
+  color: var(--gold);
+  font-weight: 700;
+  text-align: center;
+  min-height: 0;
 }
 
 #player-info .player-name {
@@ -671,8 +690,9 @@ html, body {
 }
 
 @media (min-height: 700px) {
-  #cpu-area { padding: 8px 0 12px; }
-  #player-area { padding: 10px 0 8px; }
+  #table-area { gap: 8px; }
+  #cpu-area { padding: 4px 0; }
+  #player-area { padding: 6px 0 4px; }
 }
 </style>
 </head>
@@ -687,22 +707,23 @@ html, body {
 
   <!-- Table -->
   <div id="table-area">
+    <div id="phase-label"></div>
     <div id="cpu-area"></div>
 
     <div id="community-area">
-      <div id="phase-label"></div>
       <div id="community-card-wrap"></div>
       <div id="pot-display"></div>
-      <div id="hand-result"></div>
     </div>
 
     <div id="player-area">
+      <div id="hand-result"></div>
       <div id="player-info">
         <span class="player-name" id="player-name-label"></span>
         <span id="player-chips-display"></span>
         <span id="player-coins-display"></span>
       </div>
       <div id="player-card-wrap"></div>
+      <div id="player-bet-display"></div>
     </div>
 
     <button id="log-toggle" title="ログ">📜</button>
@@ -1442,7 +1463,7 @@ function renderCPU() {
       html += `<div class="cpu-coins">${'🪙'.repeat(p.coins)}</div>`;
     }
     if (p.bet > 0 && !p.folded) {
-      html += `<div style="font-size:1.3rem; color:var(--gold); font-weight:700;">bet:${p.bet}</div>`;
+      html += `<div class="cpu-bet">bet:${p.bet}</div>`;
     }
     html += '</div>';
   }
@@ -1508,6 +1529,14 @@ function renderPlayer() {
     else wrap.style.opacity = '1';
   } else {
     wrap.innerHTML = '';
+  }
+
+  // Bet display
+  const betDisplay = document.getElementById('player-bet-display');
+  if (human.bet > 0 && !human.folded) {
+    betDisplay.textContent = `bet: ${human.bet}`;
+  } else {
+    betDisplay.textContent = '';
   }
 }
 
