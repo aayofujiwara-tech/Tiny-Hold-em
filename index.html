@@ -702,6 +702,10 @@ html, body {
       <p style="font-size:0.7rem; color:var(--text-dim); margin-top:6px; text-align:center;">
         同役時: 数字が大きい方が勝ち。同数字なら 🪙青 &gt; 💀赤 &gt; ⚓黒
       </p>
+      <p style="font-size:0.65rem; color:var(--text-dim); margin-top:8px; text-align:center; line-height:1.4; border-top:1px solid rgba(255,255,255,0.08); padding-top:6px;">
+        👥 2人：金貨を集めるゲーム<br>
+        👥 3人以上：チップがなくなったら脱落。最後の1人が優勝！
+      </p>
       <button id="guide-close">閉じる</button>
     </div>
 
@@ -738,7 +742,12 @@ html, body {
   <!-- Start Screen -->
   <div id="start-screen">
     <h2>🏴‍☠️ タイニーホールデム</h2>
-    <p>海賊たちのミニポーカー！<br>金貨を3枚集めたら勝利じゃ！</p>
+    <p>海賊たちのミニポーカー！</p>
+    <p style="font-size:0.75rem; color:var(--text-dim); max-width:280px; text-align:center; line-height:1.5;">
+      👥 人数によるルールの違い<br>
+      ■ 2人：金貨を3枚集めたら勝利！<br>
+      ■ 3人以上：チップがなくなったら脱落。<br>最後の1人が優勝！
+    </p>
     <div id="cpu-count-select">
       <label>CPU人数:</label>
       <select id="cpu-count">
@@ -934,6 +943,11 @@ function cpuDecide(player, canCheck, currentBet, communityCard) {
     }
     return Math.random() < 0.25 ? { action: 'call' } : { action: 'fold' };
   }
+}
+
+// ===== Mode Helper =====
+function isCoinMode() {
+  return state.players.length === 2;
 }
 
 // ===== Logging =====
@@ -1201,6 +1215,7 @@ async function goToShowdown() {
     winner.chips += state.pot;
     addLog(`${winner.name} がポット ${state.pot}枚を獲得（全員フォールド）`);
     await handleCoinReward(winner);
+    checkEliminations();
     await showResult(winner, null, true);
     return;
   }
@@ -1213,17 +1228,15 @@ async function goToShowdown() {
   winner.chips += state.pot;
   addLog(`${winner.name} の勝利！ 役: ${handResult.name} → ポット ${state.pot}枚獲得`);
   await handleCoinReward(winner);
+  checkEliminations();
   await showResult(winner, handResult, false);
 }
 
 async function handleCoinReward(winner) {
-  // Coin logic: winner takes a coin
-  // If winner is dealer, they keep their coin (don't lose it) — but here coins come from table
+  // Coin mode (2 players only)
+  if (!isCoinMode()) return;
+
   if (state.tableCoins > 0) {
-    // If the dealer won, the dealer "defends" - coins stay on table from dealer's perspective
-    // Actually per the rules: winner gets a coin, but if dealer wins they "keep" their coin
-    // Let's interpret: there are 3 table coins. Winner takes 1 from table.
-    // If the dealer wins, they don't take from table (they guard it).
     const dealerPlayer = state.players[state.dealerIndex];
     if (winner.id === dealerPlayer.id) {
       addLog(`${winner.name} はディーラーなので金貨を守った！`);
@@ -1235,18 +1248,29 @@ async function handleCoinReward(winner) {
   }
 }
 
+function checkEliminations() {
+  for (const p of state.players) {
+    if (p.chips <= 0 && !p.eliminated) {
+      p.eliminated = true;
+      addLog(`${p.name} はチップ切れで脱落！`);
+    }
+  }
+}
+
 async function showResult(winner, handResult, byFold) {
   state.phase = PHASES.RESULT;
 
   // Check for game over
-  const gameWinner = state.players.find(p => p.coins >= 3);
-  if (gameWinner) {
-    renderAll();
-    showGameOver(gameWinner);
-    return;
+  if (isCoinMode()) {
+    const gameWinner = state.players.find(p => p.coins >= 3);
+    if (gameWinner) {
+      renderAll();
+      showGameOver(gameWinner);
+      return;
+    }
   }
 
-  // Check if only one player remains
+  // Check if only one player remains (both modes)
   const alive = alivePlayers();
   if (alive.length <= 1) {
     renderAll();
@@ -1285,7 +1309,7 @@ async function showResult(winner, handResult, byFold) {
   overlay.classList.add('visible');
   renderAll();
 
-  if (winner.isHuman || winner.coins >= 1) {
+  if (isCoinMode() && (winner.isHuman || winner.coins >= 1)) {
     triggerCoinEffect();
   }
 }
@@ -1295,16 +1319,30 @@ function showGameOver(winner) {
   const title = document.getElementById('gameover-title');
   const text = document.getElementById('gameover-text');
 
-  if (winner && winner.isHuman) {
-    title.textContent = '🏆 大勝利！';
-    text.textContent = '金貨を3枚集めて海賊王になった！';
-    triggerCoinRain();
-  } else if (winner) {
-    title.textContent = '💀 敗北…';
-    text.textContent = `${winner.name} が金貨3枚を集めて勝利した…`;
+  if (isCoinMode()) {
+    // 2-player coin mode
+    if (winner && winner.isHuman) {
+      title.textContent = '🏆 大勝利！';
+      text.textContent = '金貨を3枚集めて海賊王になった！';
+    } else if (winner) {
+      title.textContent = '💀 敗北…';
+      text.textContent = `${winner.name} が金貨3枚を集めて勝利した…`;
+    } else {
+      title.textContent = '💀 敗北…';
+      text.textContent = 'チップが尽きてしまった…';
+    }
   } else {
-    title.textContent = '💀 敗北…';
-    text.textContent = 'チップが尽きてしまった…';
+    // 3+ player chip elimination mode
+    if (winner && winner.isHuman) {
+      title.textContent = '🏆 大勝利！';
+      text.textContent = '全員のチップを奪って海賊王になった！';
+    } else if (winner) {
+      title.textContent = '💀 敗北…';
+      text.textContent = `${winner.name} が全員のチップを奪って勝利した…`;
+    } else {
+      title.textContent = '💀 敗北…';
+      text.textContent = 'チップが尽きてしまった…';
+    }
   }
 
   overlay.classList.add('visible');
@@ -1343,12 +1381,17 @@ function renderAll() {
 
 function renderHeader() {
   const goldDisplay = document.getElementById('gold-display');
-  const human = state.players[0];
-  let html = '';
-  for (let i = 0; i < 3; i++) {
-    html += `<div class="gold-slot ${i < human.coins ? 'earned' : ''}">🪙</div>`;
+  if (isCoinMode()) {
+    const human = state.players[0];
+    let html = '';
+    for (let i = 0; i < 3; i++) {
+      html += `<div class="gold-slot ${i < human.coins ? 'earned' : ''}">🪙</div>`;
+    }
+    goldDisplay.innerHTML = html;
+    goldDisplay.style.display = '';
+  } else {
+    goldDisplay.style.display = 'none';
   }
-  goldDisplay.innerHTML = html;
 }
 
 function renderCPU() {
@@ -1373,7 +1416,7 @@ function renderCPU() {
     }
 
     html += `<div class="cpu-chips">⚫×${p.chips}</div>`;
-    if (p.coins > 0) {
+    if (isCoinMode() && p.coins > 0) {
       html += `<div class="cpu-coins">${'🪙'.repeat(p.coins)}</div>`;
     }
     if (p.bet > 0 && !p.folded) {
@@ -1437,8 +1480,8 @@ function renderPlayer() {
   }
   document.getElementById('player-chips-display').innerHTML = chipsHTML;
 
-  // Coins
-  document.getElementById('player-coins-display').textContent = human.coins > 0 ? '🪙'.repeat(human.coins) : '';
+  // Coins (only in coin mode)
+  document.getElementById('player-coins-display').textContent = isCoinMode() && human.coins > 0 ? '🪙'.repeat(human.coins) : '';
 
   // Card
   if (human.hand && !human.eliminated) {
