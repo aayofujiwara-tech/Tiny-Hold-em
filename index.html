@@ -736,6 +736,96 @@ html, body {
   touch-action: manipulation;
 }
 
+/* ===== Title Return Button ===== */
+#btn-title-return {
+  font-family: 'Pirata One', cursive;
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  border: 1px solid var(--text-dim);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 32px;
+}
+#btn-title-return:hover { background: rgba(255,255,255,0.08); }
+
+/* ===== Confirm Dialog ===== */
+#confirm-dialog {
+  position: absolute;
+  inset: 0;
+  background: rgba(10,22,40,0.92);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 110;
+}
+#confirm-dialog.visible { display: flex; }
+
+#confirm-dialog p {
+  font-family: 'Pirata One', cursive;
+  font-size: 1.1rem;
+  color: var(--text);
+  text-align: center;
+}
+
+#confirm-dialog .confirm-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+#confirm-dialog .confirm-btn {
+  font-family: 'Pirata One', cursive;
+  font-size: 1rem;
+  padding: 10px 24px;
+  border: 2px solid;
+  border-radius: 8px;
+  cursor: pointer;
+  min-height: 44px;
+  background: transparent;
+  touch-action: manipulation;
+}
+
+#btn-confirm-cancel {
+  color: var(--text-dim);
+  border-color: var(--text-dim);
+}
+#btn-confirm-ok {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+/* ===== Set Result Overlay ===== */
+#set-result-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10,22,40,0.92);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  z-index: 55;
+}
+#set-result-overlay.visible { display: flex; }
+
+#set-result-overlay h3 {
+  font-family: 'Pirata One', cursive;
+  font-size: 1.5rem;
+  color: var(--gold);
+  text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+
+#set-result-details {
+  font-size: 1rem;
+  color: var(--text);
+  text-align: center;
+  line-height: 1.8;
+}
+
 /* ===== Responsive ===== */
 
 /* Very small phones (< 375px, e.g. iPhone SE gen1) */
@@ -786,6 +876,16 @@ html, body {
   <div id="header">
     <h1>🏴‍☠️ タイニーホールデム</h1>
     <div id="gold-display"></div>
+    <button id="btn-title-return">🏠 タイトルへ</button>
+  </div>
+
+  <!-- Confirm Dialog -->
+  <div id="confirm-dialog">
+    <p>ゲームを終了してタイトルに戻りますか？</p>
+    <div class="confirm-buttons">
+      <button class="confirm-btn" id="btn-confirm-cancel">キャンセル</button>
+      <button class="confirm-btn" id="btn-confirm-ok">戻る</button>
+    </div>
   </div>
 
   <!-- Table -->
@@ -828,8 +928,9 @@ html, body {
         同役時: 数字が大きい方が勝ち。同数字なら 🪙青 &gt; 💀赤 &gt; ⚓黒
       </p>
       <p style="font-size:0.65rem; color:var(--text-dim); margin-top:8px; text-align:center; line-height:1.4; border-top:1px solid rgba(255,255,255,0.08); padding-top:6px;">
-        👥 2人：金貨を集めるゲーム<br>
-        👥 3人以上：チップがなくなったら脱落。最後の1人が優勝！
+        ⚔️ クイックマッチ：チップ0で即終了<br>
+        🪙 金貨バトル（2人）：2セット先取で勝利<br>
+        🪙 金貨バトル（3人以上）：チップ0で脱落
       </p>
       <button id="guide-close">閉じる</button>
     </div>
@@ -839,6 +940,13 @@ html, body {
       <h3 id="result-title"></h3>
       <div id="result-details"></div>
       <button class="pirate-btn" id="btn-next-round" style="font-size:1rem; padding:8px 24px;">次のラウンド</button>
+    </div>
+
+    <!-- Set Result Overlay (coin battle) -->
+    <div id="set-result-overlay">
+      <h3 id="set-result-title"></h3>
+      <div id="set-result-details"></div>
+      <button class="pirate-btn" id="btn-next-set" style="font-size:1rem; padding:8px 24px;">次のセットへ</button>
     </div>
 
     <!-- Game Over Overlay -->
@@ -874,7 +982,7 @@ html, body {
       <label style="color:var(--text-dim); font-size:0.85rem;">ゲームモード:</label>
       <div id="mode-buttons">
         <button class="mode-btn selected" data-mode="quick">⚔️ クイックマッチ<br><span style="font-size:0.65rem; font-family:'Crimson Pro',serif;">1回勝負・チップ奪い合い</span></button>
-        <button class="mode-btn" data-mode="coin">🪙 金貨バトル<br><span style="font-size:0.65rem; font-family:'Crimson Pro',serif;">金貨3枚で勝利</span></button>
+        <button class="mode-btn" data-mode="coin">🪙 金貨バトル<br><span style="font-size:0.65rem; font-family:'Crimson Pro',serif;">2セット先取で勝利</span></button>
       </div>
     </div>
 
@@ -977,6 +1085,10 @@ function createInitialState(cpuCount, gameMode) {
     lastRaiserIndex: -1,
     actedThisRound: new Set(),
     gameMode,
+    // Coin battle set tracking (1v1)
+    set: 1,
+    playerCoins: 0,
+    cpuCoins: 0,
   };
 }
 
@@ -1101,11 +1213,11 @@ function cpuDecide(player, canCheck, currentBet, communityCard) {
 
 // ===== Mode Helper =====
 function isCoinMode() {
-  return state.gameMode === 'coin' && state.players.length === 2;
+  return state && state.gameMode === 'coin' && state.players.length === 2;
 }
 
 function isQuickMode() {
-  return state.gameMode === 'quick';
+  return state && state.gameMode === 'quick';
 }
 
 // ===== Logging =====
@@ -1433,31 +1545,13 @@ async function goToShowdown() {
 }
 
 async function handleCoinReward(winner) {
-  // Coin mode (2 players only)
-  if (!isCoinMode()) return;
-
-  if (state.tableCoins > 0) {
-    const dealerPlayer = state.players[state.dealerIndex];
-    if (winner.id === dealerPlayer.id) {
-      addLog(`${winner.name} はディーラーなので金貨を守った！`);
-    } else {
-      state.tableCoins--;
-      winner.coins++;
-      addLog(`${winner.name} が金貨を獲得！ (${winner.coins}/3)`);
-    }
-  }
+  // No per-round coin reward in new set-based coin mode
+  // Coins are awarded at set end (when someone busts)
 }
 
 function checkEliminations() {
   if (isCoinMode()) {
-    // In coin mode 2-player, reset chips when someone hits 0
-    const busted = state.players.find(p => p.chips <= 0 && !p.eliminated);
-    if (busted) {
-      for (const p of state.players) {
-        p.chips = 10;
-      }
-      addLog('チップリセット！ 両者10枚に戻る');
-    }
+    // In coin mode 1v1: don't eliminate, set end is handled in showResult
     return;
   }
   for (const p of state.players) {
@@ -1466,6 +1560,65 @@ function checkEliminations() {
       addLog(`${p.name} はチップ切れで脱落！`);
     }
   }
+}
+
+function checkSetEnd() {
+  // Only for coin mode 1v1
+  if (!isCoinMode()) return null;
+  const busted = state.players.find(p => p.chips <= 0);
+  if (!busted) return null;
+  // The player who still has chips wins the set
+  const setWinner = state.players.find(p => p.chips > 0);
+  return setWinner;
+}
+
+function awardSetCoin(setWinner) {
+  if (setWinner.isHuman) {
+    state.playerCoins++;
+  } else {
+    state.cpuCoins++;
+  }
+  addLog(`セット${state.set}終了！ ${setWinner.name} が金貨を獲得！`);
+}
+
+function showSetResult(setWinner) {
+  const overlay = document.getElementById('set-result-overlay');
+  const title = document.getElementById('set-result-title');
+  const details = document.getElementById('set-result-details');
+
+  title.textContent = `🪙 セット${state.set}終了！`;
+
+  const winnerLabel = setWinner.isHuman ? 'あなたの勝利！ 金貨を獲得しました' : `${setWinner.name} の勝利！ 金貨を奪われた…`;
+  const pCoins = state.playerCoins;
+  const cCoins = state.cpuCoins;
+  const cpu = state.players.find(p => !p.isHuman);
+
+  details.innerHTML = `${winnerLabel}<br><br>金貨: あなた ${'🪙'.repeat(pCoins)}${'○'.repeat(2 - pCoins)}  ${cpu.name} ${'🪙'.repeat(cCoins)}${'○'.repeat(2 - cCoins)}`;
+
+  overlay.classList.add('visible');
+}
+
+function startNextSet() {
+  document.getElementById('set-result-overlay').classList.remove('visible');
+  document.getElementById('result-overlay').classList.remove('visible');
+
+  state.set++;
+  state.roundNumber = 0;
+
+  // Reset chips and player state
+  for (const p of state.players) {
+    p.chips = 10;
+    p.eliminated = false;
+    p.folded = false;
+    p.bet = 0;
+    p.hand = null;
+  }
+  state.pot = 0;
+  state.currentBet = 0;
+
+  addLog(`── セット${state.set} 開始 ──`);
+  renderAll();
+  startRound();
 }
 
 async function showResult(winner, handResult, byFold) {
@@ -1482,17 +1635,25 @@ async function showResult(winner, handResult, byFold) {
     }
   }
 
-  // Coin mode: check for 3 coins
+  // Coin mode 1v1: check if set ended (someone busted)
   if (isCoinMode()) {
-    const gameWinner = state.players.find(p => p.coins >= 3);
-    if (gameWinner) {
+    const setWinner = checkSetEnd();
+    if (setWinner) {
+      awardSetCoin(setWinner);
       renderAll();
-      showGameOver(gameWinner);
+      // Check if game is over (2 coins = win)
+      if (state.playerCoins >= 2 || state.cpuCoins >= 2) {
+        const gameWinner = state.playerCoins >= 2 ? state.players[0] : state.players.find(p => !p.isHuman);
+        showGameOver(gameWinner);
+        return;
+      }
+      // Show set result, then next set
+      showSetResult(setWinner);
       return;
     }
   }
 
-  // Check if only one player remains (elimination modes)
+  // Check if only one player remains (3+ elimination modes)
   if (!isQuickMode() && !isCoinMode()) {
     const alive = alivePlayers();
     if (alive.length <= 1) {
@@ -1538,10 +1699,6 @@ async function showResult(winner, handResult, byFold) {
 
   overlay.classList.add('visible');
   renderAll();
-
-  if (isCoinMode() && (winner.isHuman || winner.coins >= 1)) {
-    triggerCoinEffect();
-  }
 }
 
 function showGameOver(winner, humanEliminated) {
@@ -1559,16 +1716,25 @@ function showGameOver(winner, humanEliminated) {
       text.textContent = 'チップを全部奪われた…';
     }
   } else if (isCoinMode()) {
-    // Coin battle 1vs1
+    // Coin battle 1vs1 - set based
+    const pC = state.playerCoins;
+    const cC = state.cpuCoins;
     if (winner && winner.isHuman) {
-      title.textContent = '🥇 金貨バトル勝利！';
-      text.textContent = `金貨を ${winner.coins} 枚獲得！`;
+      if (cC === 0) {
+        title.textContent = '🏆 完全勝利！';
+        text.textContent = `金貨を ${pC}枚 獲得！`;
+      } else {
+        title.textContent = '🏆 勝利！';
+        text.textContent = `激戦の末、金貨 ${pC}枚 獲得！`;
+      }
     } else if (winner) {
-      title.textContent = '💀 金貨バトル敗北…';
-      text.textContent = '金貨を奪われた…';
-    } else {
-      title.textContent = '🤝 引き分け！';
-      text.textContent = 'お互い金貨を分け合った';
+      if (pC === 0) {
+        title.textContent = '💀 完敗…';
+        text.textContent = '金貨を全部奪われた';
+      } else {
+        title.textContent = '💀 惜敗…';
+        text.textContent = 'あと一歩だった…';
+      }
     }
   } else if (humanEliminated) {
     // 3+ player: human eliminated
@@ -1612,6 +1778,7 @@ function restartGame() {
 
 // ===== Rendering =====
 function renderAll() {
+  if (!state) return;
   renderHeader();
   renderCPU();
   renderCommunity();
@@ -1625,11 +1792,15 @@ function renderAll() {
 function renderHeader() {
   const goldDisplay = document.getElementById('gold-display');
   if (isCoinMode()) {
-    const human = state.players[0];
-    let html = '';
-    for (let i = 0; i < 3; i++) {
-      html += `<div class="gold-slot ${i < human.coins ? 'earned' : ''}">🪙</div>`;
-    }
+    const cpu = state.players.find(p => !p.isHuman);
+    const pC = state.playerCoins;
+    const cC = state.cpuCoins;
+    let html = `<span style="font-size:0.75rem; color:var(--text-dim);">セット${state.set}/3</span> `;
+    html += `<span style="font-size:0.75rem;">`;
+    html += `${'🪙'.repeat(pC)}${'○'.repeat(2 - pC)}`;
+    html += ` - `;
+    html += `${'🪙'.repeat(cC)}${'○'.repeat(2 - cC)}`;
+    html += `</span>`;
     goldDisplay.innerHTML = html;
     goldDisplay.style.display = '';
   } else {
@@ -1659,9 +1830,6 @@ function renderCPU() {
     }
 
     html += `<div class="cpu-chips">${p.chips}</div>`;
-    if (isCoinMode() && p.coins > 0) {
-      html += `<div class="cpu-coins">${'🪙'.repeat(p.coins)}</div>`;
-    }
     if (p.bet > 0 && !p.folded) {
       html += `<div class="cpu-bet">bet:${p.bet}</div>`;
     }
@@ -1736,7 +1904,7 @@ function renderPlayer() {
   document.getElementById('player-name-label').textContent = `${dealerIcon}${human.name}`;
 
   // Coins (only in coin mode)
-  document.getElementById('player-coins-display').textContent = isCoinMode() && human.coins > 0 ? '🪙'.repeat(human.coins) : '';
+  document.getElementById('player-coins-display').textContent = '';
 }
 
 function renderPhaseLabel() {
@@ -1911,7 +2079,7 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
       desc.innerHTML = '⚔️ チップが0になったら即終了！シンプルで短時間の勝負';
       cpuSelect.style.display = 'none';
     } else {
-      desc.innerHTML = '👥 人数によるルールの違い<br>■ 2人：金貨を3枚集めたら勝利！<br>■ 3人以上：チップがなくなったら脱落。最後の1人が優勝！';
+      desc.innerHTML = '👥 人数によるルールの違い<br>■ 2人：2セット先取で勝利！<br>■ 3人以上：チップがなくなったら脱落。最後の1人が優勝！';
       cpuSelect.style.display = 'flex';
     }
   });
@@ -1919,6 +2087,45 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
 
 // Initialize: quick mode hides CPU count
 document.getElementById('cpu-count-select').style.display = 'none';
+
+// Title return button
+document.getElementById('btn-title-return').addEventListener('click', () => {
+  if (!state || state.phase === PHASES.IDLE) {
+    // Not in game, go directly to title
+    returnToTitle();
+    return;
+  }
+  // In game, show confirmation
+  document.getElementById('confirm-dialog').classList.add('visible');
+});
+
+document.getElementById('btn-confirm-cancel').addEventListener('click', () => {
+  document.getElementById('confirm-dialog').classList.remove('visible');
+});
+
+document.getElementById('btn-confirm-ok').addEventListener('click', () => {
+  document.getElementById('confirm-dialog').classList.remove('visible');
+  returnToTitle();
+});
+
+function returnToTitle() {
+  // Cancel any pending human action
+  if (humanResolve) {
+    humanResolve = null;
+  }
+  // Hide all overlays
+  document.getElementById('result-overlay').classList.remove('visible');
+  document.getElementById('gameover-overlay').classList.remove('visible');
+  document.getElementById('set-result-overlay').classList.remove('visible');
+  document.getElementById('hand-guide').classList.remove('visible');
+  document.getElementById('game-log').classList.remove('visible');
+  disableActions();
+  state = null;
+  document.getElementById('start-screen').style.display = 'flex';
+}
+
+// Next set button (coin battle)
+document.getElementById('btn-next-set').addEventListener('click', startNextSet);
 
 </script>
 </body>
