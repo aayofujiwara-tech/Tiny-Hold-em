@@ -2754,9 +2754,12 @@ document.getElementById('btn-next-set').addEventListener('click', startNextSet);
     }
 
     if (currentStep === TOTAL_STEPS - 1) {
-      nextBtn.textContent = '⚔️ すぐに遊ぶ';
-      nextBtn.classList.add('primary');
+      prevBtn.textContent = '🏠 タイトルへ戻る';
+      prevBtn.style.visibility = 'visible';
+      nextBtn.style.display = 'none';
     } else {
+      prevBtn.textContent = '前へ';
+      nextBtn.style.display = '';
       nextBtn.textContent = '次へ →';
       nextBtn.classList.add('primary');
     }
@@ -2773,16 +2776,6 @@ document.getElementById('btn-next-set').addEventListener('click', startNextSet);
     screen.classList.remove('visible');
   }
 
-  // Quick-start: クイックマッチ + CPU1人 + ひよっこ
-  function quickStart() {
-    closeTutorial();
-    selectedVsMode = '1v1';
-    selectedGameMode = 'quick';
-    selectedCpuCount = 1;
-    selectedCpuLevel = 'easy';
-    startGame();
-  }
-
   document.getElementById('btn-howto').addEventListener('click', openTutorial);
 
   backBtn.addEventListener('click', () => {
@@ -2795,7 +2788,9 @@ document.getElementById('btn-next-set').addEventListener('click', startNextSet);
   });
 
   prevBtn.addEventListener('click', () => {
-    if (currentStep > 0) {
+    if (currentStep === TOTAL_STEPS - 1) {
+      closeTutorial();
+    } else if (currentStep > 0) {
       currentStep--;
       updateUI();
     }
@@ -2805,8 +2800,6 @@ document.getElementById('btn-next-set').addEventListener('click', startNextSet);
     if (currentStep < TOTAL_STEPS - 1) {
       currentStep++;
       updateUI();
-    } else {
-      quickStart();
     }
   });
 })();
