@@ -1,0 +1,1695 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🏴‍☠️ タイニーホールデム</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Crimson+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== CSS Variables ===== */
+:root {
+  --bg: #0a1628;
+  --table: #0d2a18;
+  --gold: #f0c040;
+  --gold-dim: #a07820;
+  --parchment: #f5e8c0;
+  --card-back: #2a1208;
+  --red: #d03030;
+  --blue: #2060d0;
+  --black: #1a1a1a;
+  --text: #e8dcc0;
+  --text-dim: #887860;
+  --danger: #c03030;
+}
+
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%; width: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 16px;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* ===== Main Layout ===== */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ===== Header ===== */
+#header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: linear-gradient(180deg, #0e1f3a 0%, var(--bg) 100%);
+  border-bottom: 1px solid #1a3050;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+#header h1 {
+  font-family: 'Pirata One', cursive;
+  font-size: 1.3rem;
+  color: var(--gold);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  letter-spacing: 1px;
+}
+
+#gold-display {
+  display: flex;
+  gap: 4px;
+  font-size: 1.1rem;
+}
+
+.gold-slot {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--gold-dim);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem;
+  background: rgba(0,0,0,0.3);
+  transition: all 0.3s;
+}
+.gold-slot.earned { background: var(--gold); border-color: var(--gold); }
+
+/* ===== Table Area ===== */
+#table-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(ellipse at center, #143820 0%, var(--table) 60%, #091a10 100%);
+  border: 3px solid #1a3a20;
+  border-radius: 20px;
+  margin: 6px 8px;
+  padding: 8px;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+#table-area::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg, transparent, transparent 2px,
+    rgba(255,255,255,0.01) 2px, rgba(255,255,255,0.01) 4px
+  );
+  pointer-events: none;
+}
+
+/* ===== CPU Area ===== */
+#cpu-area {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 4px 0 8px;
+  flex-shrink: 0;
+}
+
+.cpu-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  transition: opacity 0.3s;
+}
+.cpu-slot.folded { opacity: 0.35; }
+.cpu-slot.eliminated { display: none; }
+
+.cpu-name {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.cpu-name .dealer-hat { font-size: 0.8rem; }
+
+.cpu-chips {
+  font-size: 0.65rem;
+  color: var(--gold-dim);
+}
+
+.cpu-coins {
+  font-size: 0.6rem;
+  display: flex;
+  gap: 1px;
+}
+
+/* ===== Card Styles ===== */
+.card {
+  width: 56px; height: 80px;
+  border-radius: 8px;
+  position: relative;
+  perspective: 600px;
+  flex-shrink: 0;
+}
+
+.card-inner {
+  width: 100%; height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.5s ease;
+}
+
+.card.flipped .card-inner { transform: rotateY(180deg); }
+
+.card-face {
+  position: absolute;
+  width: 100%; height: 100%;
+  border-radius: 8px;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-front {
+  background: var(--parchment);
+  border: 2px solid #c0a870;
+  transform: rotateY(180deg);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.card-front .card-suit { font-size: 1.4rem; }
+.card-front .card-rank {
+  font-family: 'Crimson Pro', serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.card-front.suit-red .card-rank { color: var(--red); }
+.card-front.suit-blue .card-rank { color: var(--blue); }
+.card-front.suit-black .card-rank { color: var(--black); }
+
+.card-back {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      var(--card-back),
+      var(--card-back) 3px,
+      #3a2010 3px,
+      #3a2010 6px
+    );
+  border: 2px solid #4a3020;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+.card-back::after {
+  content: '🏴‍☠️';
+  font-size: 1.3rem;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+}
+
+.card.glow .card-front {
+  box-shadow: 0 0 15px 5px var(--gold), 0 0 30px 10px rgba(240,192,64,0.3);
+  animation: glowPulse 1s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 10px 3px var(--gold); }
+  50% { box-shadow: 0 0 20px 8px var(--gold), 0 0 40px 15px rgba(240,192,64,0.3); }
+}
+
+/* Player card (larger) */
+#player-area .card {
+  width: 72px;
+  height: 104px;
+}
+#player-area .card-front .card-suit { font-size: 1.8rem; }
+#player-area .card-front .card-rank { font-size: 1.3rem; }
+
+/* ===== Community Area ===== */
+#community-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 6px;
+  min-height: 0;
+}
+
+#community-card-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#community-card-wrap .card {
+  width: 66px;
+  height: 94px;
+}
+#community-card-wrap .card-front .card-suit { font-size: 1.6rem; }
+#community-card-wrap .card-front .card-rank { font-size: 1.2rem; }
+
+#pot-display {
+  font-size: 0.85rem;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#phase-label {
+  font-family: 'Pirata One', cursive;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+#hand-result {
+  font-family: 'Pirata One', cursive;
+  font-size: 1.1rem;
+  color: var(--gold);
+  text-align: center;
+  min-height: 1.4em;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+#hand-result.visible { opacity: 1; }
+
+/* ===== Player Area ===== */
+#player-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0 4px;
+  flex-shrink: 0;
+}
+
+#player-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+#player-info .player-name {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+#player-chips-display {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.chip-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #555;
+  border: 1px solid #777;
+}
+.chip-dot.active {
+  background: var(--gold);
+  border-color: var(--gold-dim);
+}
+
+#player-coins-display {
+  font-size: 0.75rem;
+}
+
+/* ===== Action Bar ===== */
+#action-bar {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  background: linear-gradient(0deg, #0e1f3a 0%, var(--bg) 100%);
+  border-top: 1px solid #1a3050;
+  flex-shrink: 0;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  font-family: 'Pirata One', cursive;
+  font-size: 0.95rem;
+  padding: 8px 16px;
+  border: 2px solid;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-width: 70px;
+  text-align: center;
+  background: transparent;
+}
+.action-btn:active { transform: scale(0.95); }
+.action-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+  transform: none;
+}
+
+#btn-fold {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+#btn-fold:hover:not(:disabled) { background: rgba(192,48,48,0.15); }
+
+#btn-check {
+  color: var(--text);
+  border-color: var(--text-dim);
+}
+#btn-check:hover:not(:disabled) { background: rgba(255,255,255,0.08); }
+
+#btn-bet {
+  color: var(--gold);
+  border-color: var(--gold-dim);
+}
+#btn-bet:hover:not(:disabled) { background: rgba(240,192,64,0.12); }
+
+#btn-call {
+  color: #40c060;
+  border-color: #40c060;
+  display: none;
+}
+#btn-call:hover:not(:disabled) { background: rgba(64,192,96,0.12); }
+
+#bet-controls {
+  display: none;
+  align-items: center;
+  gap: 6px;
+}
+
+#bet-amount {
+  font-family: 'Crimson Pro', serif;
+  font-size: 1rem;
+  width: 40px;
+  text-align: center;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--gold-dim);
+  border-radius: 4px;
+  color: var(--gold);
+  padding: 4px;
+}
+
+.bet-adj {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--gold-dim);
+  background: transparent;
+  color: var(--gold);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#btn-bet-confirm {
+  font-family: 'Pirata One', cursive;
+  font-size: 0.85rem;
+  padding: 4px 12px;
+  border: 2px solid var(--gold);
+  border-radius: 6px;
+  background: var(--gold);
+  color: var(--bg);
+  cursor: pointer;
+}
+
+/* ===== Start / New Round / Settings ===== */
+#start-screen {
+  position: absolute;
+  inset: 0;
+  background: rgba(10,22,40,0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 100;
+}
+
+#start-screen h2 {
+  font-family: 'Pirata One', cursive;
+  font-size: 2rem;
+  color: var(--gold);
+  text-shadow: 0 3px 8px rgba(0,0,0,0.5);
+}
+
+#start-screen p {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  text-align: center;
+  max-width: 280px;
+}
+
+#cpu-count-select {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#cpu-count-select label {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+#cpu-count-select select {
+  font-family: 'Crimson Pro', serif;
+  font-size: 1rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--gold-dim);
+  background: var(--bg);
+  color: var(--gold);
+}
+
+.pirate-btn {
+  font-family: 'Pirata One', cursive;
+  font-size: 1.2rem;
+  padding: 12px 32px;
+  border: 2px solid var(--gold);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #f0c040, #c09020);
+  color: var(--bg);
+  cursor: pointer;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+  box-shadow: 0 4px 12px rgba(240,192,64,0.3);
+  transition: all 0.15s;
+}
+.pirate-btn:active { transform: scale(0.95); }
+
+/* ===== Game Log ===== */
+#game-log {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 120px;
+  overflow-y: auto;
+  background: rgba(10,22,40,0.9);
+  border-top: 1px solid #1a3050;
+  padding: 6px 10px;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  display: none;
+  z-index: 20;
+}
+#game-log.visible { display: block; }
+
+#game-log p {
+  margin: 2px 0;
+  line-height: 1.3;
+}
+
+#log-toggle {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--text-dim);
+  background: rgba(10,22,40,0.7);
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  cursor: pointer;
+  z-index: 21;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== Result Overlay ===== */
+#result-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10,22,40,0.92);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  z-index: 50;
+}
+#result-overlay.visible { display: flex; }
+
+#result-overlay h3 {
+  font-family: 'Pirata One', cursive;
+  font-size: 1.5rem;
+  color: var(--gold);
+  text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+
+#result-details {
+  font-size: 0.85rem;
+  color: var(--text);
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ===== Game Over Overlay ===== */
+#gameover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10,22,40,0.95);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 80;
+}
+#gameover-overlay.visible { display: flex; }
+
+#gameover-overlay h2 {
+  font-family: 'Pirata One', cursive;
+  font-size: 2rem;
+  color: var(--gold);
+}
+
+#gameover-text {
+  font-size: 1rem;
+  color: var(--text);
+  text-align: center;
+}
+
+/* ===== Coin Rain ===== */
+.coin-rain {
+  position: fixed;
+  font-size: 1.5rem;
+  z-index: 200;
+  pointer-events: none;
+  animation: coinFall 2s ease-in forwards;
+}
+
+@keyframes coinFall {
+  0% { transform: translateY(-40px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* ===== Deal animation ===== */
+.card.dealing {
+  animation: dealIn 0.4s ease-out forwards;
+}
+
+@keyframes dealIn {
+  0% { transform: translateY(-60px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* ===== Tooltip ===== */
+#hand-guide {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(10,22,40,0.96);
+  border: 2px solid var(--gold-dim);
+  border-radius: 12px;
+  padding: 16px;
+  z-index: 90;
+  display: none;
+  max-width: 320px;
+  width: 90%;
+}
+#hand-guide.visible { display: block; }
+
+#hand-guide h4 {
+  font-family: 'Pirata One', cursive;
+  color: var(--gold);
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+#hand-guide table {
+  width: 100%;
+  font-size: 0.75rem;
+  border-collapse: collapse;
+}
+
+#hand-guide td, #hand-guide th {
+  padding: 3px 6px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+#hand-guide th { color: var(--gold-dim); }
+
+#guide-close {
+  display: block;
+  margin: 10px auto 0;
+  font-family: 'Pirata One', cursive;
+  padding: 4px 16px;
+  border: 1px solid var(--gold-dim);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gold);
+  cursor: pointer;
+}
+
+#guide-toggle {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--text-dim);
+  background: rgba(10,22,40,0.7);
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  cursor: pointer;
+  z-index: 21;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 374px) {
+  .card { width: 48px; height: 68px; }
+  .card-front .card-suit { font-size: 1.1rem; }
+  .card-front .card-rank { font-size: 0.9rem; }
+  #player-area .card { width: 60px; height: 86px; }
+  #community-card-wrap .card { width: 56px; height: 80px; }
+  .action-btn { padding: 6px 10px; font-size: 0.85rem; min-width: 58px; }
+}
+
+@media (min-height: 700px) {
+  #cpu-area { padding: 8px 0 12px; }
+  #player-area { padding: 10px 0 8px; }
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Header -->
+  <div id="header">
+    <h1>🏴‍☠️ タイニーホールデム</h1>
+    <div id="gold-display"></div>
+  </div>
+
+  <!-- Table -->
+  <div id="table-area">
+    <div id="cpu-area"></div>
+
+    <div id="community-area">
+      <div id="phase-label"></div>
+      <div id="community-card-wrap"></div>
+      <div id="pot-display"></div>
+      <div id="hand-result"></div>
+    </div>
+
+    <div id="player-area">
+      <div id="player-info">
+        <span class="player-name" id="player-name-label"></span>
+        <span id="player-chips-display"></span>
+        <span id="player-coins-display"></span>
+      </div>
+      <div id="player-card-wrap"></div>
+    </div>
+
+    <button id="log-toggle" title="ログ">📜</button>
+    <button id="guide-toggle" title="役一覧">?</button>
+    <div id="game-log"></div>
+
+    <!-- Hand Guide -->
+    <div id="hand-guide">
+      <h4>役一覧（強い順）</h4>
+      <table>
+        <tr><th>役</th><th>条件</th><th>確率</th></tr>
+        <tr><td>ロイヤル</td><td>A+K 同スート</td><td>2.86%</td></tr>
+        <tr><td>ストフラ</td><td>連番+同スート</td><td>8.57%</td></tr>
+        <tr><td>バディ</td><td>同じ数字</td><td>14.29%</td></tr>
+        <tr><td>フラ</td><td>同スート</td><td>17.14%</td></tr>
+        <tr><td>スト</td><td>連番</td><td>22.86%</td></tr>
+        <tr><td>ハイカード</td><td>役なし</td><td>34.29%</td></tr>
+      </table>
+      <p style="font-size:0.7rem; color:var(--text-dim); margin-top:6px; text-align:center;">
+        同役時: 数字が大きい方が勝ち。同数字なら 🪙青 &gt; 💀赤 &gt; ⚓黒
+      </p>
+      <button id="guide-close">閉じる</button>
+    </div>
+
+    <!-- Result Overlay -->
+    <div id="result-overlay">
+      <h3 id="result-title"></h3>
+      <div id="result-details"></div>
+      <button class="pirate-btn" id="btn-next-round" style="font-size:1rem; padding:8px 24px;">次のラウンド</button>
+    </div>
+
+    <!-- Game Over Overlay -->
+    <div id="gameover-overlay">
+      <h2 id="gameover-title"></h2>
+      <div id="gameover-text"></div>
+      <button class="pirate-btn" id="btn-new-game">もう一度遊ぶ</button>
+    </div>
+  </div>
+
+  <!-- Action Bar -->
+  <div id="action-bar">
+    <button class="action-btn" id="btn-fold" disabled>フォールド</button>
+    <button class="action-btn" id="btn-check" disabled>チェック</button>
+    <button class="action-btn" id="btn-bet" disabled>ベット</button>
+    <button class="action-btn" id="btn-call" disabled>コール</button>
+    <div id="bet-controls">
+      <button class="bet-adj" id="btn-bet-minus">−</button>
+      <input type="number" id="bet-amount" value="1" min="1" max="3" readonly>
+      <button class="bet-adj" id="btn-bet-plus">＋</button>
+      <button id="btn-bet-confirm">決定</button>
+      <button class="bet-adj" id="btn-bet-cancel" style="font-size:0.7rem;">✕</button>
+    </div>
+  </div>
+
+  <!-- Start Screen -->
+  <div id="start-screen">
+    <h2>🏴‍☠️ タイニーホールデム</h2>
+    <p>海賊たちのミニポーカー！<br>金貨を3枚集めたら勝利じゃ！</p>
+    <div id="cpu-count-select">
+      <label>CPU人数:</label>
+      <select id="cpu-count">
+        <option value="1">1人</option>
+        <option value="2" selected>2人</option>
+        <option value="3">3人</option>
+        <option value="4">4人</option>
+      </select>
+    </div>
+    <button class="pirate-btn" id="btn-start">出航する！</button>
+  </div>
+</div>
+
+<script>
+/* ======================================================
+   Tiny Hold'em - Game Logic
+   ====================================================== */
+
+// ===== Constants =====
+const SUITS = [
+  { id: 'red',   emoji: '💀', label: '赤', suitRank: 1 },
+  { id: 'black', emoji: '⚓', label: '黒', suitRank: 0 },
+  { id: 'blue',  emoji: '🪙', label: '青', suitRank: 2 },
+];
+
+const RANKS = [
+  { value: 10, display: '10' },
+  { value: 11, display: 'J' },
+  { value: 12, display: 'Q' },
+  { value: 13, display: 'K' },
+  { value: 14, display: 'A' },
+];
+
+const PHASES = {
+  IDLE: 'IDLE',
+  ANTE: 'ANTE',
+  DEAL: 'DEAL',
+  PRE_FLOP_BET: 'PRE_FLOP_BET',
+  REVEAL: 'REVEAL',
+  POST_FLOP_BET: 'POST_FLOP_BET',
+  SHOWDOWN: 'SHOWDOWN',
+  RESULT: 'RESULT',
+};
+
+const CPU_NAMES = ['海賊A', '海賊B', '海賊C', '海賊D'];
+
+const HAND_NAMES = {
+  6: 'ロイヤル',
+  5: 'ストフラ',
+  4: 'バディ',
+  3: 'フラ',
+  2: 'スト',
+  1: 'ハイカード',
+};
+
+const HAND_NAMES_EN = {
+  6: 'Royal',
+  5: 'Straight Flush',
+  4: 'Pair',
+  3: 'Flush',
+  2: 'Straight',
+  1: 'High Card',
+};
+
+// ===== Game State =====
+let state = null;
+
+function createInitialState(cpuCount) {
+  const players = [{
+    id: 0, name: 'あなた', isHuman: true,
+    chips: 10, coins: 0, hand: null,
+    folded: false, bet: 0, isDealer: false,
+    eliminated: false,
+  }];
+  for (let i = 0; i < cpuCount; i++) {
+    players.push({
+      id: i + 1, name: CPU_NAMES[i], isHuman: false,
+      chips: 10, coins: 0, hand: null,
+      folded: false, bet: 0, isDealer: false,
+      eliminated: false,
+    });
+  }
+  players[0].isDealer = true;
+  return {
+    phase: PHASES.IDLE,
+    deck: [],
+    communityCard: null,
+    pot: 0,
+    currentBet: 0,
+    players,
+    tableCoins: 3,
+    dealerIndex: 0,
+    activePlayerIndex: -1,
+    log: [],
+    roundNumber: 0,
+    bettingRound: 0,
+    lastRaiserIndex: -1,
+    actedThisRound: new Set(),
+  };
+}
+
+// ===== Deck =====
+function createDeck() {
+  const deck = [];
+  for (const suit of SUITS) {
+    for (const rank of RANKS) {
+      deck.push({ rank: rank.value, display: rank.display, suit: suit.id, emoji: suit.emoji, suitRank: suit.suitRank });
+    }
+  }
+  return deck;
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ===== Hand Classification =====
+function classifyHand(card1, card2) {
+  const r1 = card1.rank, r2 = card2.rank;
+  const s1 = card1.suit, s2 = card2.suit;
+  const isStraight = Math.abs(r1 - r2) === 1;
+  const isFlush = s1 === s2;
+  const isPair = r1 === r2;
+  const isRoyal = isPair === false && Math.min(r1, r2) === 13 && Math.max(r1, r2) === 14 && isFlush;
+
+  if (isRoyal)               return { name: 'ロイヤル',   nameEn: 'Royal',          rank: 6 };
+  if (isStraight && isFlush)  return { name: 'ストフラ',   nameEn: 'Straight Flush', rank: 5 };
+  if (isPair)                 return { name: 'バディ',     nameEn: 'Pair',           rank: 4 };
+  if (isFlush)                return { name: 'フラ',       nameEn: 'Flush',          rank: 3 };
+  if (isStraight)             return { name: 'スト',       nameEn: 'Straight',       rank: 2 };
+  return                             { name: 'ハイカード', nameEn: 'High Card',      rank: 1 };
+}
+
+function compareHands(p1, p2, community) {
+  const h1 = classifyHand(p1.hand, community);
+  const h2 = classifyHand(p2.hand, community);
+  if (h1.rank !== h2.rank) return h1.rank > h2.rank ? 1 : -1;
+
+  const max1 = Math.max(p1.hand.rank, community.rank);
+  const max2 = Math.max(p2.hand.rank, community.rank);
+  if (max1 !== max2) return max1 > max2 ? 1 : -1;
+
+  const min1 = Math.min(p1.hand.rank, community.rank);
+  const min2 = Math.min(p2.hand.rank, community.rank);
+  if (min1 !== min2) return min1 > min2 ? 1 : -1;
+
+  const sr1 = Math.max(p1.hand.suitRank, community.suitRank);
+  const sr2 = Math.max(p2.hand.suitRank, community.suitRank);
+  return sr1 > sr2 ? 1 : sr1 < sr2 ? -1 : 0;
+}
+
+// ===== CPU AI =====
+function evalHandScore(card, communityCard) {
+  if (!communityCard) {
+    // Pre-flop: score based on card rank alone
+    return ((card.rank - 10) / 4) * 60 + 20; // 20~80
+  }
+  const hand = classifyHand(card, communityCard);
+  let score = hand.rank * 15; // 15~90
+  score += (Math.max(card.rank, communityCard.rank) - 10) * 2; // 0~8
+  return Math.min(100, score);
+}
+
+function cpuDecide(player, canCheck, currentBet, communityCard) {
+  const score = evalHandScore(player.hand, communityCard);
+  const callAmount = currentBet - player.bet;
+
+  if (score >= 75) {
+    // Strong hand: bet or raise
+    if (currentBet === 0) {
+      const betAmount = Math.min(score >= 90 ? 3 : 2, player.chips);
+      return betAmount > 0 ? { action: 'bet', amount: betAmount } : { action: 'check' };
+    } else {
+      if (callAmount < player.chips && player.chips - callAmount >= 1) {
+        const raiseAmount = Math.min(score >= 90 ? 2 : 1, player.chips - callAmount);
+        if (raiseAmount > 0 && currentBet + raiseAmount <= 3) {
+          return { action: 'raise', amount: raiseAmount };
+        }
+      }
+      return callAmount <= player.chips ? { action: 'call' } : { action: 'fold' };
+    }
+  } else if (score >= 40) {
+    // Medium hand: check/call
+    if (currentBet === 0) {
+      if (Math.random() < 0.2) {
+        const betAmt = Math.min(1, player.chips);
+        return betAmt > 0 ? { action: 'bet', amount: betAmt } : { action: 'check' };
+      }
+      return { action: 'check' };
+    }
+    return callAmount <= player.chips ? { action: 'call' } : { action: 'fold' };
+  } else {
+    // Weak hand
+    if (currentBet === 0) {
+      return { action: 'check' };
+    }
+    return Math.random() < 0.25 ? { action: 'call' } : { action: 'fold' };
+  }
+}
+
+// ===== Logging =====
+function addLog(msg) {
+  state.log.push(msg);
+  renderLog();
+}
+
+// ===== Active Players =====
+function activePlayers() {
+  return state.players.filter(p => !p.eliminated && !p.folded);
+}
+
+function alivePlayers() {
+  return state.players.filter(p => !p.eliminated);
+}
+
+// ===== Game Flow =====
+let animating = false;
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+async function startGame() {
+  const cpuCount = parseInt(document.getElementById('cpu-count').value);
+  state = createInitialState(cpuCount);
+  document.getElementById('start-screen').style.display = 'none';
+  renderAll();
+  await startRound();
+}
+
+async function startRound() {
+  state.roundNumber++;
+  state.phase = PHASES.ANTE;
+  state.communityCard = null;
+  state.pot = 0;
+  state.currentBet = 0;
+  state.lastRaiserIndex = -1;
+  state.actedThisRound = new Set();
+
+  // Reset player round state
+  for (const p of state.players) {
+    p.hand = null;
+    p.folded = false;
+    p.bet = 0;
+    if (p.chips <= 0 && !p.eliminated) {
+      p.eliminated = true;
+      addLog(`${p.name} はチップ切れで脱落！`);
+    }
+  }
+
+  renderAll();
+  addLog(`── ラウンド ${state.roundNumber} ──`);
+
+  // Ante
+  for (const p of alivePlayers()) {
+    p.chips--;
+    state.pot++;
+  }
+  addLog(`全員アンティ 1枚 → ポット ${state.pot}`);
+  renderAll();
+  await sleep(400);
+
+  // Deal
+  state.phase = PHASES.DEAL;
+  state.deck = shuffle(createDeck());
+
+  // Deal cards with staggered animation
+  for (const p of alivePlayers()) {
+    p.hand = state.deck.pop();
+  }
+  state.communityCard = state.deck.pop();
+
+  renderAll();
+  addLog('カード配布完了');
+  await sleep(600);
+
+  // Pre-flop betting
+  state.phase = PHASES.PRE_FLOP_BET;
+  state.currentBet = 0;
+  resetBets();
+  renderAll();
+  await runBettingRound();
+}
+
+function resetBets() {
+  for (const p of state.players) {
+    p.bet = 0;
+  }
+  state.currentBet = 0;
+  state.lastRaiserIndex = -1;
+  state.actedThisRound = new Set();
+}
+
+function getNextActiveIndex(fromIndex) {
+  const total = state.players.length;
+  for (let i = 1; i <= total; i++) {
+    const idx = (fromIndex + i) % total;
+    const p = state.players[idx];
+    if (!p.eliminated && !p.folded && p.chips > 0) return idx;
+  }
+  return -1;
+}
+
+function getFirstBetterIndex() {
+  // Left of dealer
+  return getNextActiveIndex(state.dealerIndex);
+}
+
+async function runBettingRound() {
+  if (activePlayers().length <= 1) {
+    await goToShowdown();
+    return;
+  }
+
+  state.actedThisRound = new Set();
+  state.lastRaiserIndex = -1;
+  let currentIdx = getFirstBetterIndex();
+
+  while (true) {
+    if (currentIdx === -1) break;
+    const player = state.players[currentIdx];
+
+    if (player.eliminated || player.folded || player.chips <= 0) {
+      currentIdx = getNextActiveIndex(currentIdx);
+      if (currentIdx === state.lastRaiserIndex || activePlayers().length <= 1) break;
+      continue;
+    }
+
+    // Check if betting round is complete
+    if (state.actedThisRound.has(currentIdx) && currentIdx === state.lastRaiserIndex) break;
+    if (state.actedThisRound.has(currentIdx) && state.lastRaiserIndex === -1) break;
+
+    state.activePlayerIndex = currentIdx;
+    renderAll();
+
+    let decision;
+    if (player.isHuman) {
+      decision = await waitForHumanAction(player);
+    } else {
+      await sleep(600 + Math.random() * 400);
+      const communityVisible = state.phase === PHASES.POST_FLOP_BET ? state.communityCard : null;
+      decision = cpuDecide(player, state.currentBet === 0, state.currentBet, communityVisible);
+    }
+
+    applyAction(player, decision);
+
+    if (activePlayers().length <= 1) break;
+
+    const nextIdx = getNextActiveIndex(currentIdx);
+    if (nextIdx === -1) break;
+
+    // If no one has raised and everyone has acted
+    if (state.lastRaiserIndex === -1 && state.actedThisRound.size >= activePlayers().length) break;
+    // If we've gone around to the last raiser
+    if (nextIdx === state.lastRaiserIndex && state.actedThisRound.has(nextIdx)) break;
+
+    currentIdx = nextIdx;
+  }
+
+  state.activePlayerIndex = -1;
+  renderAll();
+
+  // Move to next phase
+  if (state.phase === PHASES.PRE_FLOP_BET) {
+    if (activePlayers().length <= 1) {
+      await goToShowdown();
+    } else {
+      state.phase = PHASES.REVEAL;
+      renderAll();
+      addLog('コミュニティカード公開！');
+      await sleep(800);
+      state.phase = PHASES.POST_FLOP_BET;
+      resetBets();
+      renderAll();
+      await runBettingRound();
+    }
+  } else if (state.phase === PHASES.POST_FLOP_BET) {
+    await goToShowdown();
+  }
+}
+
+function applyAction(player, decision) {
+  state.actedThisRound.add(player.id);
+
+  switch (decision.action) {
+    case 'fold':
+      player.folded = true;
+      addLog(`${player.name} → フォールド`);
+      break;
+    case 'check':
+      addLog(`${player.name} → チェック`);
+      break;
+    case 'call': {
+      const callAmount = Math.min(state.currentBet - player.bet, player.chips);
+      player.chips -= callAmount;
+      player.bet += callAmount;
+      state.pot += callAmount;
+      addLog(`${player.name} → コール (${callAmount}枚)`);
+      break;
+    }
+    case 'bet': {
+      const amount = Math.min(decision.amount, player.chips);
+      player.chips -= amount;
+      player.bet += amount;
+      state.pot += amount;
+      state.currentBet = player.bet;
+      state.lastRaiserIndex = player.id;
+      state.actedThisRound = new Set([player.id]);
+      addLog(`${player.name} → ベット ${amount}枚`);
+      break;
+    }
+    case 'raise': {
+      const callAmount = state.currentBet - player.bet;
+      const raiseAmount = decision.amount;
+      const totalCost = Math.min(callAmount + raiseAmount, player.chips);
+      player.chips -= totalCost;
+      player.bet += totalCost;
+      state.pot += totalCost;
+      state.currentBet = player.bet;
+      state.lastRaiserIndex = player.id;
+      state.actedThisRound = new Set([player.id]);
+      addLog(`${player.name} → レイズ ${raiseAmount}枚 (計${player.bet}枚)`);
+      break;
+    }
+  }
+  renderAll();
+}
+
+// ===== Human Input =====
+let humanResolve = null;
+
+function waitForHumanAction(player) {
+  return new Promise(resolve => {
+    humanResolve = resolve;
+    enableActions(player);
+  });
+}
+
+function enableActions(player) {
+  const canCheck = state.currentBet === 0 || player.bet >= state.currentBet;
+  const callAmount = state.currentBet - player.bet;
+  const canCall = !canCheck && callAmount <= player.chips && callAmount > 0;
+  const canBet = state.currentBet === 0 && player.chips > 0;
+  const canRaise = state.currentBet > 0 && player.chips > callAmount && state.currentBet < 3;
+
+  document.getElementById('btn-fold').disabled = false;
+  document.getElementById('btn-check').disabled = !canCheck;
+  document.getElementById('btn-check').textContent = canCheck ? 'チェック' : 'チェック';
+
+  if (canBet || canRaise) {
+    document.getElementById('btn-bet').style.display = '';
+    document.getElementById('btn-bet').disabled = false;
+    document.getElementById('btn-bet').textContent = canRaise ? 'レイズ' : 'ベット';
+  } else {
+    document.getElementById('btn-bet').style.display = 'none';
+  }
+
+  if (canCall) {
+    document.getElementById('btn-call').style.display = '';
+    document.getElementById('btn-call').disabled = false;
+    document.getElementById('btn-call').textContent = `コール (${callAmount})`;
+  } else {
+    document.getElementById('btn-call').style.display = 'none';
+  }
+}
+
+function disableActions() {
+  document.getElementById('btn-fold').disabled = true;
+  document.getElementById('btn-check').disabled = true;
+  document.getElementById('btn-bet').disabled = true;
+  document.getElementById('btn-call').disabled = true;
+  document.getElementById('btn-bet').style.display = '';
+  document.getElementById('btn-call').style.display = 'none';
+  document.getElementById('bet-controls').style.display = 'none';
+}
+
+// ===== Showdown =====
+async function goToShowdown() {
+  state.phase = PHASES.SHOWDOWN;
+  renderAll();
+  addLog('ショーダウン！');
+  await sleep(600);
+
+  const remaining = activePlayers();
+
+  if (remaining.length === 1) {
+    // Everyone else folded
+    const winner = remaining[0];
+    winner.chips += state.pot;
+    addLog(`${winner.name} がポット ${state.pot}枚を獲得（全員フォールド）`);
+    await handleCoinReward(winner);
+    await showResult(winner, null, true);
+    return;
+  }
+
+  // Compare hands
+  remaining.sort((a, b) => -compareHands(a, b, state.communityCard));
+  const winner = remaining[0];
+  const handResult = classifyHand(winner.hand, state.communityCard);
+
+  winner.chips += state.pot;
+  addLog(`${winner.name} の勝利！ 役: ${handResult.name} → ポット ${state.pot}枚獲得`);
+  await handleCoinReward(winner);
+  await showResult(winner, handResult, false);
+}
+
+async function handleCoinReward(winner) {
+  // Coin logic: winner takes a coin
+  // If winner is dealer, they keep their coin (don't lose it) — but here coins come from table
+  if (state.tableCoins > 0) {
+    // If the dealer won, the dealer "defends" - coins stay on table from dealer's perspective
+    // Actually per the rules: winner gets a coin, but if dealer wins they "keep" their coin
+    // Let's interpret: there are 3 table coins. Winner takes 1 from table.
+    // If the dealer wins, they don't take from table (they guard it).
+    const dealerPlayer = state.players[state.dealerIndex];
+    if (winner.id === dealerPlayer.id) {
+      addLog(`${winner.name} はディーラーなので金貨を守った！`);
+    } else {
+      state.tableCoins--;
+      winner.coins++;
+      addLog(`${winner.name} が金貨を獲得！ (${winner.coins}/3)`);
+    }
+  }
+}
+
+async function showResult(winner, handResult, byFold) {
+  state.phase = PHASES.RESULT;
+
+  // Check for game over
+  const gameWinner = state.players.find(p => p.coins >= 3);
+  if (gameWinner) {
+    renderAll();
+    await sleep(500);
+    showGameOver(gameWinner);
+    return;
+  }
+
+  // Check if only one player remains
+  const alive = alivePlayers();
+  if (alive.length <= 1) {
+    renderAll();
+    await sleep(500);
+    showGameOver(alive[0]);
+    return;
+  }
+
+  // Show result overlay
+  const overlay = document.getElementById('result-overlay');
+  const title = document.getElementById('result-title');
+  const details = document.getElementById('result-details');
+
+  if (winner.isHuman) {
+    title.textContent = '勝利！ 🎉';
+  } else {
+    title.textContent = `${winner.name} の勝利`;
+  }
+
+  let detailText = '';
+  if (byFold) {
+    detailText = '全員フォールドで勝利';
+  } else {
+    detailText = `役: ${handResult.name} (${HAND_NAMES_EN[handResult.rank]})`;
+    // Show all hands
+    const remaining = activePlayers();
+    detailText += '<br><br>';
+    for (const p of remaining) {
+      const h = classifyHand(p.hand, state.communityCard);
+      const suitInfo = SUITS.find(s => s.id === p.hand.suit);
+      detailText += `${p.name}: ${suitInfo.emoji}${p.hand.display} → ${h.name}<br>`;
+    }
+  }
+  detailText += `<br>ポット: ${state.pot}枚`;
+  details.innerHTML = detailText;
+
+  overlay.classList.add('visible');
+  renderAll();
+
+  if (winner.isHuman || winner.coins >= 1) {
+    triggerCoinEffect();
+  }
+}
+
+function showGameOver(winner) {
+  const overlay = document.getElementById('gameover-overlay');
+  const title = document.getElementById('gameover-title');
+  const text = document.getElementById('gameover-text');
+
+  if (winner && winner.isHuman) {
+    title.textContent = '🏆 大勝利！';
+    text.textContent = '金貨を3枚集めて海賊王になった！';
+    triggerCoinRain();
+  } else if (winner) {
+    title.textContent = '💀 敗北…';
+    text.textContent = `${winner.name} が金貨3枚を集めて勝利した…`;
+  } else {
+    title.textContent = '💀 敗北…';
+    text.textContent = 'チップが尽きてしまった…';
+  }
+
+  overlay.classList.add('visible');
+}
+
+function nextRound() {
+  document.getElementById('result-overlay').classList.remove('visible');
+
+  // Move dealer
+  let nextDealer = getNextActiveIndex(state.dealerIndex);
+  if (nextDealer === -1) nextDealer = 0;
+  for (const p of state.players) p.isDealer = false;
+  state.players[nextDealer].isDealer = true;
+  state.dealerIndex = nextDealer;
+
+  startRound();
+}
+
+function restartGame() {
+  document.getElementById('gameover-overlay').classList.remove('visible');
+  document.getElementById('result-overlay').classList.remove('visible');
+  document.getElementById('start-screen').style.display = 'flex';
+}
+
+// ===== Rendering =====
+function renderAll() {
+  renderHeader();
+  renderCPU();
+  renderCommunity();
+  renderPlayer();
+  renderPhaseLabel();
+  if (state.phase !== PHASES.PRE_FLOP_BET && state.phase !== PHASES.POST_FLOP_BET) {
+    disableActions();
+  }
+}
+
+function renderHeader() {
+  const goldDisplay = document.getElementById('gold-display');
+  const human = state.players[0];
+  let html = '';
+  for (let i = 0; i < 3; i++) {
+    html += `<div class="gold-slot ${i < human.coins ? 'earned' : ''}">🪙</div>`;
+  }
+  goldDisplay.innerHTML = html;
+}
+
+function renderCPU() {
+  const area = document.getElementById('cpu-area');
+  let html = '';
+  for (let i = 1; i < state.players.length; i++) {
+    const p = state.players[i];
+    if (p.eliminated) continue;
+    const foldedClass = p.folded ? 'folded' : '';
+    const isActive = state.activePlayerIndex === p.id ? ' style="outline:2px solid var(--gold); border-radius:10px; padding:4px;"' : '';
+    html += `<div class="cpu-slot ${foldedClass}"${isActive}>`;
+    html += `<div class="cpu-name">${p.isDealer ? '<span class="dealer-hat">🎩</span>' : ''}${p.name}</div>`;
+
+    // Card
+    if (p.hand) {
+      const showCard = state.phase === PHASES.SHOWDOWN || state.phase === PHASES.RESULT;
+      if (showCard && !p.folded) {
+        html += renderCardHTML(p.hand, true, false);
+      } else {
+        html += renderCardHTML(null, false, false);
+      }
+    }
+
+    html += `<div class="cpu-chips">⚫×${p.chips}</div>`;
+    if (p.coins > 0) {
+      html += `<div class="cpu-coins">${'🪙'.repeat(p.coins)}</div>`;
+    }
+    if (p.bet > 0 && !p.folded) {
+      html += `<div style="font-size:0.6rem; color:var(--gold);">bet:${p.bet}</div>`;
+    }
+    html += '</div>';
+  }
+  area.innerHTML = html;
+}
+
+function renderCardHTML(card, faceUp, isLarge) {
+  if (!card && !faceUp) {
+    // Face down
+    return `<div class="card${isLarge ? '' : ''} dealing"><div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front"></div></div></div>`;
+  }
+  if (card && faceUp) {
+    const suitClass = `suit-${card.suit}`;
+    return `<div class="card flipped dealing"><div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front ${suitClass}"><span class="card-suit">${card.emoji}</span><span class="card-rank">${card.display}</span></div></div></div>`;
+  }
+  return '';
+}
+
+function renderCommunity() {
+  const wrap = document.getElementById('community-card-wrap');
+  const potDisplay = document.getElementById('pot-display');
+  const handResult = document.getElementById('hand-result');
+
+  if (state.communityCard) {
+    const revealed = state.phase === PHASES.REVEAL || state.phase === PHASES.POST_FLOP_BET || state.phase === PHASES.SHOWDOWN || state.phase === PHASES.RESULT;
+    if (revealed) {
+      const suitClass = `suit-${state.communityCard.suit}`;
+      wrap.innerHTML = `<div class="card flipped"><div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front ${suitClass}"><span class="card-suit">${state.communityCard.emoji}</span><span class="card-rank">${state.communityCard.display}</span></div></div></div>`;
+    } else {
+      wrap.innerHTML = `<div class="card"><div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front"></div></div></div>`;
+    }
+  } else {
+    wrap.innerHTML = '';
+  }
+
+  potDisplay.innerHTML = state.pot > 0 ? `ポット: ⚫×${state.pot}` : '';
+
+  // Show hand result for human player
+  if ((state.phase === PHASES.POST_FLOP_BET || state.phase === PHASES.SHOWDOWN || state.phase === PHASES.RESULT) && state.players[0].hand && state.communityCard && !state.players[0].folded) {
+    const h = classifyHand(state.players[0].hand, state.communityCard);
+    handResult.textContent = `あなたの役: ${h.name}`;
+    handResult.classList.add('visible');
+  } else {
+    handResult.textContent = '';
+    handResult.classList.remove('visible');
+  }
+}
+
+function renderPlayer() {
+  const wrap = document.getElementById('player-card-wrap');
+  const info = document.getElementById('player-info');
+  const human = state.players[0];
+
+  // Name & dealer
+  const dealerIcon = human.isDealer ? '🎩 ' : '';
+  document.getElementById('player-name-label').textContent = `${dealerIcon}${human.name}`;
+
+  // Chips
+  let chipsHTML = '';
+  for (let i = 0; i < 10; i++) {
+    chipsHTML += `<span class="chip-dot ${i < human.chips ? 'active' : ''}"></span>`;
+  }
+  document.getElementById('player-chips-display').innerHTML = chipsHTML;
+
+  // Coins
+  document.getElementById('player-coins-display').textContent = human.coins > 0 ? '🪙'.repeat(human.coins) : '';
+
+  // Card
+  if (human.hand && !human.eliminated) {
+    wrap.innerHTML = renderCardHTML(human.hand, true, true);
+    if (human.folded) wrap.style.opacity = '0.35';
+    else wrap.style.opacity = '1';
+  } else {
+    wrap.innerHTML = '';
+  }
+}
+
+function renderPhaseLabel() {
+  const label = document.getElementById('phase-label');
+  const phaseLabels = {
+    [PHASES.IDLE]: '',
+    [PHASES.ANTE]: 'アンティ',
+    [PHASES.DEAL]: 'カード配布中…',
+    [PHASES.PRE_FLOP_BET]: '🂠 プリフロップ ベッティング',
+    [PHASES.REVEAL]: 'コミュニティカード公開！',
+    [PHASES.POST_FLOP_BET]: '🃏 ポストフロップ ベッティング',
+    [PHASES.SHOWDOWN]: 'ショーダウン！',
+    [PHASES.RESULT]: '',
+  };
+  label.textContent = phaseLabels[state.phase] || '';
+
+  if (state.activePlayerIndex >= 0 && state.players[state.activePlayerIndex]) {
+    const ap = state.players[state.activePlayerIndex];
+    if (!ap.isHuman) {
+      label.textContent += ` — ${ap.name} が考え中…`;
+    } else {
+      label.textContent += ' — あなたの番です';
+    }
+  }
+}
+
+function renderLog() {
+  const logEl = document.getElementById('game-log');
+  let html = '';
+  const recent = state.log.slice(-30);
+  for (const msg of recent) {
+    html += `<p>${msg}</p>`;
+  }
+  logEl.innerHTML = html;
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+// ===== Effects =====
+function triggerCoinEffect() {
+  for (let i = 0; i < 5; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'coin-rain';
+      el.textContent = '🪙';
+      el.style.left = (20 + Math.random() * 60) + '%';
+      el.style.animationDuration = (1.5 + Math.random()) + 's';
+      document.body.appendChild(el);
+      el.addEventListener('animationend', () => el.remove());
+    }, i * 150);
+  }
+}
+
+function triggerCoinRain() {
+  for (let i = 0; i < 25; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'coin-rain';
+      el.textContent = '🪙';
+      el.style.left = (Math.random() * 95) + '%';
+      el.style.animationDuration = (1.5 + Math.random() * 1.5) + 's';
+      document.body.appendChild(el);
+      el.addEventListener('animationend', () => el.remove());
+    }, i * 100);
+  }
+}
+
+// ===== Event Handlers =====
+document.getElementById('btn-start').addEventListener('click', startGame);
+
+document.getElementById('btn-fold').addEventListener('click', () => {
+  if (!humanResolve) return;
+  disableActions();
+  const resolve = humanResolve;
+  humanResolve = null;
+  resolve({ action: 'fold' });
+});
+
+document.getElementById('btn-check').addEventListener('click', () => {
+  if (!humanResolve) return;
+  disableActions();
+  const resolve = humanResolve;
+  humanResolve = null;
+  resolve({ action: 'check' });
+});
+
+document.getElementById('btn-call').addEventListener('click', () => {
+  if (!humanResolve) return;
+  disableActions();
+  const resolve = humanResolve;
+  humanResolve = null;
+  resolve({ action: 'call' });
+});
+
+document.getElementById('btn-bet').addEventListener('click', () => {
+  // Show bet controls
+  const player = state.players[0];
+  const isBet = state.currentBet === 0;
+  const maxBet = isBet ? Math.min(3, player.chips) : Math.min(3 - state.currentBet, player.chips - (state.currentBet - player.bet));
+
+  document.getElementById('bet-controls').style.display = 'flex';
+  document.getElementById('btn-fold').style.display = 'none';
+  document.getElementById('btn-check').style.display = 'none';
+  document.getElementById('btn-bet').style.display = 'none';
+  document.getElementById('btn-call').style.display = 'none';
+  document.getElementById('bet-amount').value = 1;
+  document.getElementById('bet-amount').max = maxBet;
+});
+
+document.getElementById('btn-bet-plus').addEventListener('click', () => {
+  const input = document.getElementById('bet-amount');
+  const max = parseInt(input.max);
+  if (parseInt(input.value) < max) input.value = parseInt(input.value) + 1;
+});
+
+document.getElementById('btn-bet-minus').addEventListener('click', () => {
+  const input = document.getElementById('bet-amount');
+  if (parseInt(input.value) > 1) input.value = parseInt(input.value) - 1;
+});
+
+document.getElementById('btn-bet-confirm').addEventListener('click', () => {
+  if (!humanResolve) return;
+  const amount = parseInt(document.getElementById('bet-amount').value);
+  document.getElementById('bet-controls').style.display = 'none';
+  document.getElementById('btn-fold').style.display = '';
+  document.getElementById('btn-check').style.display = '';
+  document.getElementById('btn-bet').style.display = '';
+  disableActions();
+
+  const isBet = state.currentBet === 0;
+  const resolve = humanResolve;
+  humanResolve = null;
+  if (isBet) {
+    resolve({ action: 'bet', amount });
+  } else {
+    resolve({ action: 'raise', amount });
+  }
+});
+
+document.getElementById('btn-bet-cancel').addEventListener('click', () => {
+  document.getElementById('bet-controls').style.display = 'none';
+  document.getElementById('btn-fold').style.display = '';
+  document.getElementById('btn-check').style.display = '';
+  document.getElementById('btn-bet').style.display = '';
+  // Re-enable actions
+  if (humanResolve) enableActions(state.players[0]);
+});
+
+document.getElementById('btn-next-round').addEventListener('click', nextRound);
+document.getElementById('btn-new-game').addEventListener('click', restartGame);
+
+// Log toggle
+document.getElementById('log-toggle').addEventListener('click', () => {
+  document.getElementById('game-log').classList.toggle('visible');
+});
+
+// Guide toggle
+document.getElementById('guide-toggle').addEventListener('click', () => {
+  document.getElementById('hand-guide').classList.toggle('visible');
+});
+document.getElementById('guide-close').addEventListener('click', () => {
+  document.getElementById('hand-guide').classList.remove('visible');
+});
+
+</script>
+</body>
+</html>
