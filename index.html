@@ -301,6 +301,8 @@ html, body {
   color: var(--gold);
   text-align: center;
   display: none;
+  flex-shrink: 0;
+  padding: 2px 0;
 }
 #hand-result.visible { display: block; }
 
@@ -310,15 +312,8 @@ html, body {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 4px 0 2px;
+  padding: 2px 0 2px;
   flex-shrink: 0;
-}
-
-#player-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 1rem;
 }
 
 #player-bet-display {
@@ -329,23 +324,26 @@ html, body {
   min-height: 0;
 }
 
-#player-info .player-name {
-  color: var(--gold);
-  font-weight: 600;
+#player-name-label {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  text-align: center;
 }
 
 #player-chips-display {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  gap: 6px;
+  font-size: 1.1rem;
+  color: var(--parchment);
 }
 #player-chips-display .chips-label {
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: var(--text-dim);
 }
 #player-chips-display .chips-value {
   font-family: 'Pirata One', cursive;
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   color: var(--parchment);
   font-weight: 700;
   line-height: 1.1;
@@ -353,6 +351,7 @@ html, body {
 
 #player-coins-display {
   font-size: 1rem;
+  text-align: center;
 }
 
 /* ===== Action Bar ===== */
@@ -686,7 +685,7 @@ html, body {
   .action-btn { padding: 10px 14px; font-size: 1rem; min-width: 64px; min-height: 44px; }
   .cpu-chips { font-size: 1.2rem; }
   #pot-display .pot-value { font-size: 1.6rem; }
-  #player-chips-display .chips-value { font-size: 1.5rem; }
+  #player-chips-display .chips-value { font-size: 1.3rem; }
 }
 
 @media (min-height: 700px) {
@@ -715,15 +714,14 @@ html, body {
       <div id="pot-display"></div>
     </div>
 
+    <div id="hand-result"></div>
+
     <div id="player-area">
-      <div id="hand-result"></div>
-      <div id="player-info">
-        <span class="player-name" id="player-name-label"></span>
-        <span id="player-chips-display"></span>
-        <span id="player-coins-display"></span>
-      </div>
+      <div id="player-chips-display"></div>
       <div id="player-card-wrap"></div>
       <div id="player-bet-display"></div>
+      <div id="player-name-label"></div>
+      <div id="player-coins-display"></div>
     </div>
 
     <button id="log-toggle" title="ログ">📜</button>
@@ -1509,18 +1507,10 @@ function renderCommunity() {
 
 function renderPlayer() {
   const wrap = document.getElementById('player-card-wrap');
-  const info = document.getElementById('player-info');
   const human = state.players[0];
 
-  // Name & dealer
-  const dealerIcon = human.isDealer ? '🎩 ' : '';
-  document.getElementById('player-name-label').textContent = `${dealerIcon}${human.name}`;
-
-  // Chips
-  document.getElementById('player-chips-display').innerHTML = `<span class="chips-label">チップ</span><span class="chips-value">${human.chips}</span>`;
-
-  // Coins (only in coin mode)
-  document.getElementById('player-coins-display').textContent = isCoinMode() && human.coins > 0 ? '🪙'.repeat(human.coins) : '';
+  // Chips (horizontal: "チップ: 10")
+  document.getElementById('player-chips-display').innerHTML = `<span class="chips-label">チップ:</span><span class="chips-value">${human.chips}</span>`;
 
   // Card
   if (human.hand && !human.eliminated) {
@@ -1538,6 +1528,13 @@ function renderPlayer() {
   } else {
     betDisplay.textContent = '';
   }
+
+  // Name (small, below card)
+  const dealerIcon = human.isDealer ? '🎩 ' : '';
+  document.getElementById('player-name-label').textContent = `${dealerIcon}${human.name}`;
+
+  // Coins (only in coin mode)
+  document.getElementById('player-coins-display').textContent = isCoinMode() && human.coins > 0 ? '🪙'.repeat(human.coins) : '';
 }
 
 function renderPhaseLabel() {
