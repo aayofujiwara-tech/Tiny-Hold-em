@@ -369,28 +369,34 @@ html, body {
 /* ===== Action Bar ===== */
 #action-bar {
   display: flex;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: 6px;
+  padding: 10px 8px;
   padding-bottom: calc(10px + env(safe-area-inset-bottom));
   background: rgba(14,31,58,0.97);
   border-top: 1px solid #1a3050;
   flex-shrink: 0;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  min-height: 72px;
 }
 
 .action-btn {
   font-family: 'Pirata One', cursive;
-  font-size: 1.1rem;
-  padding: 14px 22px;
+  font-size: 1rem;
+  padding: 10px 14px;
   border: 2px solid;
   border-radius: 8px;
   cursor: pointer;
-  min-width: 84px;
-  min-height: 52px;
+  min-width: 0;
+  min-height: 48px;
   text-align: center;
   background: transparent;
   touch-action: manipulation;
+  flex: 1 1 0;
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .action-btn:disabled {
   opacity: 0.3;
@@ -660,7 +666,7 @@ html, body {
 #result-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(10,22,40,0.92);
+  background: rgba(0,0,0,0.88);
   display: none;
   flex-direction: column;
   align-items: center;
@@ -684,11 +690,55 @@ html, body {
   line-height: 1.6;
 }
 
+/* Showdown card display */
+.showdown-hands {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin: 8px 0;
+}
+.showdown-player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.showdown-player .sd-name {
+  font-size: 0.95rem;
+  color: var(--text-dim);
+}
+.showdown-player .sd-cards {
+  display: flex;
+  gap: 4px;
+  font-size: 2.2rem;
+  line-height: 1;
+}
+.showdown-player .sd-card-label {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--parchment);
+  text-align: center;
+}
+.showdown-player .sd-hand {
+  font-family: 'Pirata One', cursive;
+  font-size: 1.1rem;
+  color: var(--gold);
+}
+.showdown-player.winner .sd-hand {
+  color: #ffd700;
+  text-shadow: 0 0 8px rgba(255,215,0,0.6);
+}
+.showdown-pot {
+  font-size: 1.1rem;
+  color: var(--gold);
+  margin-top: 4px;
+}
+
 /* ===== Game Over Overlay ===== */
 #gameover-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(10,22,40,0.95);
+  background: rgba(0,0,0,0.92);
   display: none;
   flex-direction: column;
   align-items: center;
@@ -702,12 +752,22 @@ html, body {
   font-family: 'Pirata One', cursive;
   font-size: 2rem;
   color: var(--gold);
+  animation: bounceIn 0.6s ease;
 }
 
 #gameover-text {
   font-size: 1rem;
   color: var(--text);
   text-align: center;
+}
+
+#gameover-quote {
+  font-size: 0.9rem;
+  color: var(--gold-dim);
+  text-align: center;
+  font-style: italic;
+  max-width: 280px;
+  line-height: 1.5;
 }
 
 
@@ -912,6 +972,25 @@ html, body {
   #player-area .card { width: 66px; height: 94px; }
   #action-bar { padding: 6px 10px; padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
   .action-btn { padding: 10px 16px; min-height: 46px; }
+}
+
+/* PC / Tablet (768px+) */
+@media (min-width: 768px) {
+  html { font-size: 18px; }
+  #app { max-width: 600px; }
+  .card { width: 100px; height: 140px; }
+  .card-front .card-suit { font-size: 2.4rem; }
+  .card-front .card-rank { font-size: 2.2rem; }
+  #player-area .card { width: 110px; height: 154px; }
+  #player-area .card-front .card-suit { font-size: 2.8rem; }
+  #player-area .card-front .card-rank { font-size: 2.4rem; }
+  #community-card-wrap .card { width: 100px; height: 140px; }
+  #community-card-wrap .card-front .card-suit { font-size: 2.6rem; }
+  #community-card-wrap .card-front .card-rank { font-size: 2.2rem; }
+  #pot-display .pot-value { font-size: 2.4rem; }
+  .cpu-chips { font-size: 1.6rem; }
+  #player-chips-display .chips-value { font-size: 2rem; }
+  .action-btn { font-size: 1.2rem; min-height: 56px; padding: 14px 28px; }
 }
 /* ===== Tutorial / How-to-Play ===== */
 #tutorial-screen {
@@ -1124,6 +1203,50 @@ html, body {
   touch-action: manipulation;
 }
 
+/* ===== Victory Animations ===== */
+@keyframes bounceIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.1); }
+  70% { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes goldenFlash {
+  0% { opacity: 0; }
+  20% { opacity: 0.3; }
+  100% { opacity: 0; }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.result-title-bounce {
+  animation: bounceIn 0.6s ease;
+}
+
+.trophy-pulse {
+  display: inline-block;
+  animation: pulse 1.5s ease infinite;
+  font-size: 3rem;
+}
+
+#golden-flash {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(240,192,64,0.5), transparent 70%);
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0;
+  animation: goldenFlash 0.8s ease forwards;
+}
+
 </style>
 </head>
 <body>
@@ -1210,6 +1333,7 @@ html, body {
     <div id="gameover-overlay">
       <h2 id="gameover-title"></h2>
       <div id="gameover-text"></div>
+      <div id="gameover-quote"></div>
       <button class="pirate-btn" id="btn-new-game">もう一度挑戦</button>
     </div>
   </div>
@@ -2014,16 +2138,39 @@ async function goToShowdown() {
     return;
   }
 
-  // Compare hands
+  // Compare hands — check for chop (draw)
   remaining.sort((a, b) => -compareHands(a, b, state.communityCard));
+
+  // Check if top players are tied (chop)
   const winner = remaining[0];
   const handResult = classifyHand(winner.hand, state.communityCard);
 
-  winner.chips += state.pot;
-  addLog(`${winner.name} の勝利！ 役: ${handResult.name} → ポット ${state.pot}枚獲得`);
-  await handleCoinReward(winner);
-  checkEliminations();
-  await showResult(winner, handResult, false);
+  // Count how many players tie with the winner
+  const chopPlayers = [winner];
+  for (let i = 1; i < remaining.length; i++) {
+    if (compareHands(winner, remaining[i], state.communityCard) === 0) {
+      chopPlayers.push(remaining[i]);
+    }
+  }
+
+  if (chopPlayers.length > 1) {
+    // Chop: split pot
+    const share = Math.floor(state.pot / chopPlayers.length);
+    const remainder = state.pot - share * chopPlayers.length;
+    for (let i = 0; i < chopPlayers.length; i++) {
+      chopPlayers[i].chips += share + (i === 0 ? remainder : 0);
+    }
+    const names = chopPlayers.map(p => p.name).join(' と ');
+    addLog(`引き分け（チョップ）！ ${names} がポットを山分け: ${share}枚ずつ`);
+    checkEliminations();
+    await showResult(winner, handResult, false, true);
+  } else {
+    winner.chips += state.pot;
+    addLog(`${winner.name} の勝利！ 役: ${handResult.name} → ポット ${state.pot}枚獲得`);
+    await handleCoinReward(winner);
+    checkEliminations();
+    await showResult(winner, handResult, false, false);
+  }
 }
 
 async function handleCoinReward(winner) {
@@ -2103,7 +2250,7 @@ function startNextSet() {
   startRound();
 }
 
-async function showResult(winner, handResult, byFold) {
+async function showResult(winner, handResult, byFold, isChop = false) {
   state.phase = PHASES.RESULT;
 
   // Quick match: game over when someone has 0 chips
@@ -2156,8 +2303,13 @@ async function showResult(winner, handResult, byFold) {
   const title = document.getElementById('result-title');
   const details = document.getElementById('result-details');
 
-  if (winner.isHuman) {
-    title.textContent = '勝利！ 🎉';
+  title.classList.remove('result-title-bounce');
+
+  if (isChop) {
+    title.textContent = '🤝 引き分け！（チョップ）';
+  } else if (winner.isHuman) {
+    title.textContent = '勝利！';
+    title.classList.add('result-title-bounce');
   } else {
     title.textContent = `${winner.name} の勝利`;
   }
@@ -2165,49 +2317,105 @@ async function showResult(winner, handResult, byFold) {
   let detailText = '';
   if (byFold) {
     detailText = '全員フォールドで勝利';
+    detailText += `<div class="showdown-pot">ポット獲得: 🪙 +${state.pot}</div>`;
   } else {
-    detailText = `役: ${handResult.name} (${HAND_NAMES_EN[handResult.rank]})`;
-    // Show all hands
+    // Build showdown card display
     const remaining = activePlayers();
-    detailText += '<br><br>';
+    const commSuit = SUITS.find(s => s.id === state.communityCard.suit);
+    detailText += '<div class="showdown-hands">';
     for (const p of remaining) {
       const h = classifyHand(p.hand, state.communityCard);
       const suitInfo = SUITS.find(s => s.id === p.hand.suit);
-      detailText += `${p.name}: ${suitInfo.emoji}${p.hand.display} → ${h.name}<br>`;
+      const isWin = !isChop && p.id === winner.id;
+      detailText += `<div class="showdown-player${isWin ? ' winner' : ''}">`;
+      detailText += `<span class="sd-name">${p.name}</span>`;
+      detailText += `<span class="sd-cards">${suitInfo.emoji}</span>`;
+      detailText += `<span class="sd-card-label">${p.hand.display}</span>`;
+      detailText += `<span class="sd-hand">${h.name}</span>`;
+      detailText += `</div>`;
+    }
+    detailText += '</div>';
+    if (isChop) {
+      const half = Math.floor(state.pot / remaining.length);
+      detailText += `<div class="showdown-pot">ポットを山分け: 🪙 +${half} ずつ</div>`;
+    } else {
+      detailText += `<div class="showdown-pot">ポット獲得: 🪙 +${state.pot}</div>`;
     }
   }
-  detailText += `<br>ポット: ${state.pot}枚`;
   details.innerHTML = detailText;
 
   overlay.classList.add('visible');
   renderAll();
+
+  // Victory effects for round win
+  if (!isChop && winner.isHuman) {
+    showGoldenFlash();
+    showConfetti(40, 2500);
+  }
+}
+
+// ===== Confetti =====
+function showConfetti(count = 60, duration = 3000) {
+  const colors = ['#f0c040', '#ff4444', '#4488ff', '#44ff88', '#ff88ff'];
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.style.cssText = `
+      position: fixed;
+      width: ${6 + Math.random() * 6}px;
+      height: ${6 + Math.random() * 6}px;
+      background: ${colors[Math.floor(Math.random() * colors.length)]};
+      left: ${Math.random() * 100}vw;
+      top: -10px;
+      border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+      animation: confettiFall ${1.5 + Math.random() * 1.5}s linear forwards;
+      animation-delay: ${Math.random() * 0.8}s;
+      z-index: 9999;
+      pointer-events: none;
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), duration);
+  }
+}
+
+function showGoldenFlash() {
+  const flash = document.createElement('div');
+  flash.id = 'golden-flash';
+  document.body.appendChild(flash);
+  setTimeout(() => flash.remove(), 1000);
 }
 
 function showGameOver(winner, humanEliminated) {
   const overlay = document.getElementById('gameover-overlay');
   const title = document.getElementById('gameover-title');
   const text = document.getElementById('gameover-text');
+  const quote = document.getElementById('gameover-quote');
+  let isWin = false;
+  let quoteText = '';
 
   if (isQuickMode()) {
-    // Quick match mode
     if (winner && winner.isHuman) {
-      title.textContent = '🏆 勝利！';
+      title.innerHTML = '<span class="trophy-pulse">🏆</span> 完全勝利！';
       text.textContent = 'チップを全部奪った！';
+      quoteText = '「全財産を奪い取ったぞ！海の覇者はこの俺だ！」';
+      isWin = true;
     } else {
       title.textContent = '💀 敗北…';
       text.textContent = 'チップを全部奪われた…';
+      quoteText = '「くそ、また出直してくるぞ！」';
     }
   } else if (isCoinMode()) {
-    // Coin battle 1vs1 - set based
     const pC = state.playerCoins;
     const cC = state.cpuCoins;
     if (winner && winner.isHuman) {
+      isWin = true;
       if (cC === 0) {
-        title.textContent = '🏆 完全勝利！';
+        title.innerHTML = '<span class="trophy-pulse">🏆</span> 完全制覇！';
         text.textContent = `金貨を ${pC}枚 獲得！`;
+        quoteText = '「金貨を全部手に入れた！伝説の海賊誕生だ！」';
       } else {
-        title.textContent = '🏆 勝利！';
+        title.innerHTML = '<span class="trophy-pulse">🏆</span> 激戦を制した！';
         text.textContent = `激戦の末、金貨 ${pC}枚 獲得！`;
+        quoteText = '「ギリギリの戦いだったが…勝利は俺のものだ！」';
       }
     } else if (winner) {
       if (pC === 0) {
@@ -2217,26 +2425,36 @@ function showGameOver(winner, humanEliminated) {
         title.textContent = '💀 惜敗…';
         text.textContent = 'あと一歩だった…';
       }
+      quoteText = '「くそ、また出直してくるぞ！」';
     }
   } else if (humanEliminated) {
-    // 3+ player: human eliminated
     title.textContent = '💀 脱落…';
     text.textContent = 'チップがなくなった…';
+    quoteText = '「くそ、また出直してくるぞ！」';
   } else {
-    // 3+ player chip elimination mode
     if (winner && winner.isHuman) {
-      title.textContent = '🥇 優勝！';
+      title.innerHTML = '<span class="trophy-pulse">🥇</span> 優勝！';
       text.textContent = '最後まで生き残った！';
+      quoteText = '「全財産を奪い取ったぞ！海の覇者はこの俺だ！」';
+      isWin = true;
     } else if (winner) {
       title.textContent = '💀 敗北…';
       text.textContent = `${winner.name} が最後まで生き残って勝利した…`;
+      quoteText = '「くそ、また出直してくるぞ！」';
     } else {
       title.textContent = '💀 ゲームオーバー';
       text.textContent = 'チップがなくなった！ 海賊たちに全財産を奪われてしまった…';
+      quoteText = '「くそ、また出直してくるぞ！」';
     }
   }
 
+  quote.textContent = quoteText;
   overlay.classList.add('visible');
+
+  if (isWin) {
+    showGoldenFlash();
+    showConfetti(100, 4000);
+  }
 }
 
 function nextRound() {
