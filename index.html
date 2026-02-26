@@ -81,7 +81,6 @@ html, body {
   display: flex; align-items: center; justify-content: center;
   font-size: 0.8rem;
   background: rgba(0,0,0,0.3);
-  transition: all 0.3s;
 }
 .gold-slot.earned { background: var(--gold); border-color: var(--gold); }
 
@@ -126,7 +125,6 @@ html, body {
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  transition: opacity 0.3s;
 }
 .cpu-slot.folded { opacity: 0.35; }
 .cpu-slot.eliminated { display: none; }
@@ -163,17 +161,12 @@ html, body {
 .card-inner {
   width: 100%; height: 100%;
   position: relative;
-  transform-style: preserve-3d;
-  transition: transform 0.5s ease;
 }
-
-.card.flipped .card-inner { transform: rotateY(180deg); }
 
 .card-face {
   position: absolute;
   width: 100%; height: 100%;
   border-radius: 8px;
-  backface-visibility: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -183,9 +176,15 @@ html, body {
 .card-front {
   background: var(--parchment);
   border: 2px solid #c0a870;
-  transform: rotateY(180deg);
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
+
+/* Face-up: show front, hide back */
+.card.face-up .card-front { display: flex; }
+.card.face-up .card-back { display: none; }
+/* Face-down: show back, hide front */
+.card:not(.face-up) .card-front { display: none; }
+.card:not(.face-up) .card-back { display: flex; }
 
 .card-front .card-suit { font-size: 1.4rem; }
 .card-front .card-rank {
@@ -219,15 +218,6 @@ html, body {
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
 }
 
-.card.glow .card-front {
-  box-shadow: 0 0 15px 5px var(--gold), 0 0 30px 10px rgba(240,192,64,0.3);
-  animation: glowPulse 1s ease-in-out infinite;
-}
-
-@keyframes glowPulse {
-  0%, 100% { box-shadow: 0 0 10px 3px var(--gold); }
-  50% { box-shadow: 0 0 20px 8px var(--gold), 0 0 40px 15px rgba(240,192,64,0.3); }
-}
 
 /* Player card (larger) */
 #player-area .card {
@@ -282,10 +272,9 @@ html, body {
   color: var(--gold);
   text-align: center;
   min-height: 1.4em;
-  opacity: 0;
-  transition: opacity 0.3s;
+  display: none;
 }
-#hand-result.visible { opacity: 1; }
+#hand-result.visible { display: block; }
 
 /* ===== Player Area ===== */
 #player-area {
@@ -349,16 +338,13 @@ html, body {
   border: 2px solid;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.15s;
   min-width: 70px;
   text-align: center;
   background: transparent;
 }
-.action-btn:active { transform: scale(0.95); }
 .action-btn:disabled {
   opacity: 0.3;
   cursor: default;
-  transform: none;
 }
 
 #btn-fold {
@@ -487,9 +473,7 @@ html, body {
   cursor: pointer;
   text-shadow: 0 1px 0 rgba(255,255,255,0.3);
   box-shadow: 0 4px 12px rgba(240,192,64,0.3);
-  transition: all 0.15s;
 }
-.pirate-btn:active { transform: scale(0.95); }
 
 /* ===== Game Log ===== */
 #game-log {
@@ -585,29 +569,6 @@ html, body {
   text-align: center;
 }
 
-/* ===== Coin Rain ===== */
-.coin-rain {
-  position: fixed;
-  font-size: 1.5rem;
-  z-index: 200;
-  pointer-events: none;
-  animation: coinFall 2s ease-in forwards;
-}
-
-@keyframes coinFall {
-  0% { transform: translateY(-40px) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-}
-
-/* ===== Deal animation ===== */
-.card.dealing {
-  animation: dealIn 0.4s ease-out forwards;
-}
-
-@keyframes dealIn {
-  0% { transform: translateY(-60px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
-}
 
 /* ===== Tooltip ===== */
 #hand-guide {
@@ -815,9 +776,7 @@ const PHASES = {
   IDLE: 'IDLE',
   ANTE: 'ANTE',
   DEAL: 'DEAL',
-  PRE_FLOP_BET: 'PRE_FLOP_BET',
-  REVEAL: 'REVEAL',
-  POST_FLOP_BET: 'POST_FLOP_BET',
+  BET: 'BET',
   SHOWDOWN: 'SHOWDOWN',
   RESULT: 'RESULT',
 };
@@ -873,7 +832,6 @@ function createInitialState(cpuCount) {
     activePlayerIndex: -1,
     log: [],
     roundNumber: 0,
-    bettingRound: 0,
     lastRaiserIndex: -1,
     actedThisRound: new Set(),
   };
@@ -935,10 +893,6 @@ function compareHands(p1, p2, community) {
 
 // ===== CPU AI =====
 function evalHandScore(card, communityCard) {
-  if (!communityCard) {
-    // Pre-flop: score based on card rank alone
-    return ((card.rank - 10) / 4) * 60 + 20; // 20~80
-  }
   const hand = classifyHand(card, communityCard);
   let score = hand.rank * 15; // 15~90
   score += (Math.max(card.rank, communityCard.rank) - 10) * 2; // 0~8
@@ -998,8 +952,6 @@ function alivePlayers() {
 }
 
 // ===== Game Flow =====
-let animating = false;
-
 function sleep(ms) {
   return new Promise(r => setTimeout(r, ms));
 }
@@ -1041,26 +993,19 @@ async function startRound() {
     state.pot++;
   }
   addLog(`全員アンティ 1枚 → ポット ${state.pot}`);
-  renderAll();
-  await sleep(400);
 
-  // Deal
+  // Deal — hand cards + community card (face-up immediately)
   state.phase = PHASES.DEAL;
   state.deck = shuffle(createDeck());
-
-  // Deal cards with staggered animation
   for (const p of alivePlayers()) {
     p.hand = state.deck.pop();
   }
   state.communityCard = state.deck.pop();
-
   renderAll();
-  addLog('カード配布完了');
-  await sleep(600);
+  addLog('カード配布完了（コミュニティカード公開）');
 
-  // Pre-flop betting
-  state.phase = PHASES.PRE_FLOP_BET;
-  state.currentBet = 0;
+  // Single betting round
+  state.phase = PHASES.BET;
   resetBets();
   renderAll();
   await runBettingRound();
@@ -1121,9 +1066,8 @@ async function runBettingRound() {
     if (player.isHuman) {
       decision = await waitForHumanAction(player);
     } else {
-      await sleep(600 + Math.random() * 400);
-      const communityVisible = state.phase === PHASES.POST_FLOP_BET ? state.communityCard : null;
-      decision = cpuDecide(player, state.currentBet === 0, state.currentBet, communityVisible);
+      await sleep(400 + Math.random() * 300);
+      decision = cpuDecide(player, state.currentBet === 0, state.currentBet, state.communityCard);
     }
 
     applyAction(player, decision);
@@ -1144,23 +1088,8 @@ async function runBettingRound() {
   state.activePlayerIndex = -1;
   renderAll();
 
-  // Move to next phase
-  if (state.phase === PHASES.PRE_FLOP_BET) {
-    if (activePlayers().length <= 1) {
-      await goToShowdown();
-    } else {
-      state.phase = PHASES.REVEAL;
-      renderAll();
-      addLog('コミュニティカード公開！');
-      await sleep(800);
-      state.phase = PHASES.POST_FLOP_BET;
-      resetBets();
-      renderAll();
-      await runBettingRound();
-    }
-  } else if (state.phase === PHASES.POST_FLOP_BET) {
-    await goToShowdown();
-  }
+  // Betting done — proceed to showdown
+  await goToShowdown();
 }
 
 function applyAction(player, decision) {
@@ -1263,7 +1192,6 @@ async function goToShowdown() {
   state.phase = PHASES.SHOWDOWN;
   renderAll();
   addLog('ショーダウン！');
-  await sleep(600);
 
   const remaining = activePlayers();
 
@@ -1314,7 +1242,6 @@ async function showResult(winner, handResult, byFold) {
   const gameWinner = state.players.find(p => p.coins >= 3);
   if (gameWinner) {
     renderAll();
-    await sleep(500);
     showGameOver(gameWinner);
     return;
   }
@@ -1323,7 +1250,6 @@ async function showResult(winner, handResult, byFold) {
   const alive = alivePlayers();
   if (alive.length <= 1) {
     renderAll();
-    await sleep(500);
     showGameOver(alive[0]);
     return;
   }
@@ -1410,7 +1336,7 @@ function renderAll() {
   renderCommunity();
   renderPlayer();
   renderPhaseLabel();
-  if (state.phase !== PHASES.PRE_FLOP_BET && state.phase !== PHASES.POST_FLOP_BET) {
+  if (state.phase !== PHASES.BET) {
     disableActions();
   }
 }
@@ -1461,11 +1387,11 @@ function renderCPU() {
 function renderCardHTML(card, faceUp, isLarge) {
   if (!card && !faceUp) {
     // Face down
-    return `<div class="card${isLarge ? '' : ''} dealing"><div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front"></div></div></div>`;
+    return `<div class="card"><div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front"></div></div></div>`;
   }
   if (card && faceUp) {
     const suitClass = `suit-${card.suit}`;
-    return `<div class="card flipped dealing"><div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front ${suitClass}"><span class="card-suit">${card.emoji}</span><span class="card-rank">${card.display}</span></div></div></div>`;
+    return `<div class="card face-up"><div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front ${suitClass}"><span class="card-suit">${card.emoji}</span><span class="card-rank">${card.display}</span></div></div></div>`;
   }
   return '';
 }
@@ -1476,13 +1402,8 @@ function renderCommunity() {
   const handResult = document.getElementById('hand-result');
 
   if (state.communityCard) {
-    const revealed = state.phase === PHASES.REVEAL || state.phase === PHASES.POST_FLOP_BET || state.phase === PHASES.SHOWDOWN || state.phase === PHASES.RESULT;
-    if (revealed) {
-      const suitClass = `suit-${state.communityCard.suit}`;
-      wrap.innerHTML = `<div class="card flipped"><div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front ${suitClass}"><span class="card-suit">${state.communityCard.emoji}</span><span class="card-rank">${state.communityCard.display}</span></div></div></div>`;
-    } else {
-      wrap.innerHTML = `<div class="card"><div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front"></div></div></div>`;
-    }
+    const suitClass = `suit-${state.communityCard.suit}`;
+    wrap.innerHTML = `<div class="card face-up"><div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front ${suitClass}"><span class="card-suit">${state.communityCard.emoji}</span><span class="card-rank">${state.communityCard.display}</span></div></div></div>`;
   } else {
     wrap.innerHTML = '';
   }
@@ -1490,7 +1411,7 @@ function renderCommunity() {
   potDisplay.innerHTML = state.pot > 0 ? `ポット: ⚫×${state.pot}` : '';
 
   // Show hand result for human player
-  if ((state.phase === PHASES.POST_FLOP_BET || state.phase === PHASES.SHOWDOWN || state.phase === PHASES.RESULT) && state.players[0].hand && state.communityCard && !state.players[0].folded) {
+  if ((state.phase === PHASES.BET || state.phase === PHASES.SHOWDOWN || state.phase === PHASES.RESULT) && state.players[0].hand && state.communityCard && !state.players[0].folded) {
     const h = classifyHand(state.players[0].hand, state.communityCard);
     handResult.textContent = `あなたの役: ${h.name}`;
     handResult.classList.add('visible');
@@ -1534,10 +1455,8 @@ function renderPhaseLabel() {
   const phaseLabels = {
     [PHASES.IDLE]: '',
     [PHASES.ANTE]: 'アンティ',
-    [PHASES.DEAL]: 'カード配布中…',
-    [PHASES.PRE_FLOP_BET]: '🂠 プリフロップ ベッティング',
-    [PHASES.REVEAL]: 'コミュニティカード公開！',
-    [PHASES.POST_FLOP_BET]: '🃏 ポストフロップ ベッティング',
+    [PHASES.DEAL]: 'カード配布',
+    [PHASES.BET]: '🃏 ベッティング',
     [PHASES.SHOWDOWN]: 'ショーダウン！',
     [PHASES.RESULT]: '',
   };
@@ -1564,34 +1483,9 @@ function renderLog() {
   logEl.scrollTop = logEl.scrollHeight;
 }
 
-// ===== Effects =====
-function triggerCoinEffect() {
-  for (let i = 0; i < 5; i++) {
-    setTimeout(() => {
-      const el = document.createElement('div');
-      el.className = 'coin-rain';
-      el.textContent = '🪙';
-      el.style.left = (20 + Math.random() * 60) + '%';
-      el.style.animationDuration = (1.5 + Math.random()) + 's';
-      document.body.appendChild(el);
-      el.addEventListener('animationend', () => el.remove());
-    }, i * 150);
-  }
-}
-
-function triggerCoinRain() {
-  for (let i = 0; i < 25; i++) {
-    setTimeout(() => {
-      const el = document.createElement('div');
-      el.className = 'coin-rain';
-      el.textContent = '🪙';
-      el.style.left = (Math.random() * 95) + '%';
-      el.style.animationDuration = (1.5 + Math.random() * 1.5) + 's';
-      document.body.appendChild(el);
-      el.addEventListener('animationend', () => el.remove());
-    }, i * 100);
-  }
-}
+// ===== Effects (disabled for performance) =====
+function triggerCoinEffect() {}
+function triggerCoinRain() {}
 
 // ===== Event Handlers =====
 document.getElementById('btn-start').addEventListener('click', startGame);
