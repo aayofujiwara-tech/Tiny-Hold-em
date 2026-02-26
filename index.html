@@ -165,10 +165,11 @@ html, body {
 }
 
 .cpu-bet {
-  font-size: 1rem;
+  font-size: 1.2rem;
   color: var(--gold);
   font-weight: 700;
   line-height: 1.2;
+  text-shadow: 0 0 6px rgba(240,192,64,0.4);
 }
 
 /* ===== Card Styles ===== */
@@ -327,11 +328,12 @@ html, body {
 }
 
 #player-bet-display {
-  font-size: 1rem;
+  font-size: 1.2rem;
   color: var(--gold);
   font-weight: 700;
   text-align: center;
   min-height: 0;
+  text-shadow: 0 0 6px rgba(240,192,64,0.4);
 }
 
 #player-name-label {
@@ -416,14 +418,12 @@ html, body {
 #btn-call {
   color: #40c060;
   border-color: #40c060;
-  display: none;
 }
 #btn-call:hover:not(:disabled) { background: rgba(64,192,96,0.12); }
 
 #btn-allin {
   color: #ff6040;
   border-color: #ff6040;
-  display: none;
 }
 #btn-allin:hover:not(:disabled) { background: rgba(255,96,64,0.12); }
 
@@ -1007,9 +1007,9 @@ html, body {
   <div id="action-bar">
     <button class="action-btn" id="btn-fold" disabled>フォールド</button>
     <button class="action-btn" id="btn-check" disabled>チェック</button>
+    <button class="action-btn" id="btn-call" disabled style="display:none">コール</button>
     <button class="action-btn" id="btn-bet" disabled>ベット</button>
-    <button class="action-btn" id="btn-call" disabled>コール</button>
-    <button class="action-btn" id="btn-allin" disabled>オールイン</button>
+    <button class="action-btn" id="btn-allin" disabled style="display:none">オールイン</button>
     <div id="bet-controls">
       <button class="bet-adj" id="btn-bet-minus">−</button>
       <input type="number" id="bet-amount" value="1" min="1" readonly>
@@ -1897,7 +1897,7 @@ function renderCPU() {
 
     html += `<div class="cpu-chips">${p.chips}</div>`;
     if (p.bet > 0 && !p.folded) {
-      html += `<div class="cpu-bet">bet:${p.bet}</div>`;
+      html += `<div class="cpu-bet">🪙 ベット中: ${p.bet}</div>`;
     }
     html += '</div>';
   }
@@ -1960,7 +1960,7 @@ function renderPlayer() {
   // Bet display
   const betDisplay = document.getElementById('player-bet-display');
   if (human.bet > 0 && !human.folded) {
-    betDisplay.textContent = `bet: ${human.bet}`;
+    betDisplay.textContent = `🪙 ベット中: ${human.bet}`;
   } else {
     betDisplay.textContent = '';
   }
