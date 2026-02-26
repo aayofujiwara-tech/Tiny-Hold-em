@@ -535,6 +535,40 @@ html, body {
   touch-action: manipulation;
 }
 
+/* ===== Mode Select ===== */
+#mode-select {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+#mode-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.mode-btn {
+  font-family: 'Pirata One', cursive;
+  font-size: 0.95rem;
+  padding: 10px 14px;
+  border: 2px solid var(--gold-dim);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  min-width: 130px;
+  text-align: center;
+  line-height: 1.4;
+  touch-action: manipulation;
+}
+
+.mode-btn.selected {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(240,192,64,0.1);
+}
+
 /* ===== Game Log ===== */
 #game-log {
   position: absolute;
@@ -835,11 +869,15 @@ html, body {
   <div id="start-screen">
     <h2>🏴‍☠️ タイニーホールデム</h2>
     <p>海賊たちのミニポーカー！</p>
-    <p style="font-size:0.75rem; color:var(--text-dim); max-width:280px; text-align:center; line-height:1.5;">
-      👥 人数によるルールの違い<br>
-      ■ 2人：金貨を3枚集めたら勝利！<br>
-      ■ 3人以上：チップがなくなったら脱落。<br>最後の1人が優勝！
-    </p>
+
+    <div id="mode-select">
+      <label style="color:var(--text-dim); font-size:0.85rem;">ゲームモード:</label>
+      <div id="mode-buttons">
+        <button class="mode-btn selected" data-mode="quick">⚔️ クイックマッチ<br><span style="font-size:0.65rem; font-family:'Crimson Pro',serif;">1回勝負・チップ奪い合い</span></button>
+        <button class="mode-btn" data-mode="coin">🪙 金貨バトル<br><span style="font-size:0.65rem; font-family:'Crimson Pro',serif;">金貨3枚で勝利</span></button>
+      </div>
+    </div>
+
     <div id="cpu-count-select">
       <label>CPU人数:</label>
       <select id="cpu-count">
@@ -849,6 +887,9 @@ html, body {
         <option value="4">4人</option>
       </select>
     </div>
+    <p id="mode-description" style="font-size:0.75rem; color:var(--text-dim); max-width:280px; text-align:center; line-height:1.5;">
+      ⚔️ チップが0になったら即終了！シンプルで短時間の勝負
+    </p>
     <button class="pirate-btn" id="btn-start">出航する！</button>
   </div>
 </div>
@@ -905,7 +946,7 @@ const HAND_NAMES_EN = {
 // ===== Game State =====
 let state = null;
 
-function createInitialState(cpuCount) {
+function createInitialState(cpuCount, gameMode) {
   const players = [{
     id: 0, name: 'あなた', isHuman: true,
     chips: 10, coins: 0, hand: null,
@@ -935,6 +976,7 @@ function createInitialState(cpuCount) {
     roundNumber: 0,
     lastRaiserIndex: -1,
     actedThisRound: new Set(),
+    gameMode,
   };
 }
 
@@ -1016,17 +1058,20 @@ function cpuDecide(player, canCheck, currentBet, communityCard) {
   const score = calcScore(player.hand, communityCard);
   const callAmount = Math.min(currentBet - player.bet, player.chips);
   const roll = Math.random();
+  const maxTarget = getMaxBetTarget(player);
 
   if (currentBet === 0) {
     // No bet yet — CPU acts first or after checks
     if (score >= 70) {
       // Strong: bet
-      const amount = Math.min(cpuBetAmount(score, player.chips, 0), player.chips);
+      let amount = Math.min(cpuBetAmount(score, player.chips, 0), player.chips);
+      amount = Math.min(amount, maxTarget - player.bet);
       return amount > 0 ? { action: 'bet', amount } : { action: 'check' };
     } else if (score >= 40) {
       // Medium: 50% bet, 50% check
       if (roll < 0.5) {
-        const amount = Math.min(cpuBetAmount(score, player.chips, 0), player.chips);
+        let amount = Math.min(cpuBetAmount(score, player.chips, 0), player.chips);
+        amount = Math.min(amount, maxTarget - player.bet);
         return amount > 0 ? { action: 'bet', amount } : { action: 'check' };
       }
       return { action: 'check' };
@@ -1039,7 +1084,8 @@ function cpuDecide(player, canCheck, currentBet, communityCard) {
     if (score >= 70) {
       // Strong: 40% raise, 60% call
       if (roll < 0.4 && player.chips > callAmount) {
-        const raiseAmount = Math.min(cpuBetAmount(score, player.chips - callAmount, 0), player.chips - callAmount);
+        const maxRaise = Math.min(player.chips - callAmount, maxTarget - currentBet);
+        let raiseAmount = Math.min(cpuBetAmount(score, player.chips - callAmount, 0), maxRaise);
         return raiseAmount > 0 ? { action: 'raise', amount: raiseAmount } : { action: 'call' };
       }
       return { action: 'call' };
@@ -1055,7 +1101,11 @@ function cpuDecide(player, canCheck, currentBet, communityCard) {
 
 // ===== Mode Helper =====
 function isCoinMode() {
-  return state.players.length === 2;
+  return state.gameMode === 'coin' && state.players.length === 2;
+}
+
+function isQuickMode() {
+  return state.gameMode === 'quick';
 }
 
 // ===== Logging =====
@@ -1079,8 +1129,12 @@ function sleep(ms) {
 }
 
 async function startGame() {
-  const cpuCount = parseInt(document.getElementById('cpu-count').value);
-  state = createInitialState(cpuCount);
+  const selectedMode = document.querySelector('.mode-btn.selected');
+  const gameMode = selectedMode ? selectedMode.dataset.mode : 'quick';
+  let cpuCount = parseInt(document.getElementById('cpu-count').value);
+  // Quick match is 1vs1 only
+  if (gameMode === 'quick') cpuCount = 1;
+  state = createInitialState(cpuCount, gameMode);
   document.getElementById('start-screen').style.display = 'none';
   renderAll();
   await startRound();
@@ -1100,7 +1154,8 @@ async function startRound() {
     p.hand = null;
     p.folded = false;
     p.bet = 0;
-    if (p.chips <= 0 && !p.eliminated) {
+    // In non-coin/non-quick modes, eliminate players with 0 chips
+    if (!isQuickMode() && !isCoinMode() && p.chips <= 0 && !p.eliminated) {
       p.eliminated = true;
       addLog(`${p.name} はチップ切れで脱落！`);
     }
@@ -1274,25 +1329,38 @@ function waitForHumanAction(player) {
   });
 }
 
+function getMaxBetTarget(player) {
+  // In 1v1, cap to opponent's chips so we can't over-bet
+  const opponents = state.players.filter(p => p.id !== player.id && !p.eliminated && !p.folded);
+  if (opponents.length === 0) return player.chips;
+  const maxOpponentChips = Math.max(...opponents.map(p => p.chips + p.bet));
+  return maxOpponentChips;
+}
+
 function enableActions(player) {
-  const canCheck = state.currentBet === 0 || player.bet >= state.currentBet;
-  const callAmount = Math.min(state.currentBet - player.bet, player.chips);
-  const canCall = !canCheck && callAmount > 0;
-  const canBet = state.currentBet === 0 && player.chips > 0;
-  const canRaise = state.currentBet > 0 && player.chips > callAmount;
-  const canAllin = player.chips > 0;
+  const facingBet = state.currentBet > 0 && player.bet < state.currentBet;
+  const callAmount = facingBet ? Math.min(state.currentBet - player.bet, player.chips) : 0;
+  const maxTarget = getMaxBetTarget(player);
 
+  // Determine available actions
+  const canCheck = !facingBet;
+  const canCall = facingBet && callAmount > 0;
+  const canBet = !facingBet && player.chips > 0;
+  const canRaise = facingBet && player.chips > callAmount;
+  const allinAmount = Math.min(player.chips, Math.max(0, maxTarget - player.bet));
+
+  // Fold is always available
   document.getElementById('btn-fold').disabled = false;
-  document.getElementById('btn-check').disabled = !canCheck;
 
-  if (canBet || canRaise) {
-    document.getElementById('btn-bet').style.display = '';
-    document.getElementById('btn-bet').disabled = false;
-    document.getElementById('btn-bet').textContent = canRaise ? 'レイズ' : 'ベット';
+  // Check: visible only when no bet to face
+  if (canCheck) {
+    document.getElementById('btn-check').style.display = '';
+    document.getElementById('btn-check').disabled = false;
   } else {
-    document.getElementById('btn-bet').style.display = 'none';
+    document.getElementById('btn-check').style.display = 'none';
   }
 
+  // Call: visible only when facing a bet
   if (canCall) {
     document.getElementById('btn-call').style.display = '';
     document.getElementById('btn-call').disabled = false;
@@ -1301,11 +1369,20 @@ function enableActions(player) {
     document.getElementById('btn-call').style.display = 'none';
   }
 
-  // All-in button: show when player has chips and can bet/raise
-  if (canAllin && player.chips > 1) {
+  // Bet / Raise button
+  if (canBet || canRaise) {
+    document.getElementById('btn-bet').style.display = '';
+    document.getElementById('btn-bet').disabled = false;
+    document.getElementById('btn-bet').textContent = canRaise ? 'レイズ' : 'ベット';
+  } else {
+    document.getElementById('btn-bet').style.display = 'none';
+  }
+
+  // All-in button: show when meaningful (more than 1 chip and different from call)
+  if (allinAmount > 0 && player.chips > 1 && allinAmount > callAmount) {
     document.getElementById('btn-allin').style.display = '';
     document.getElementById('btn-allin').disabled = false;
-    document.getElementById('btn-allin').textContent = `オールイン (${player.chips})`;
+    document.getElementById('btn-allin').textContent = `オールイン (${allinAmount})`;
   } else {
     document.getElementById('btn-allin').style.display = 'none';
   }
@@ -1314,11 +1391,12 @@ function enableActions(player) {
 function disableActions() {
   document.getElementById('btn-fold').disabled = true;
   document.getElementById('btn-check').disabled = true;
+  document.getElementById('btn-check').style.display = '';
   document.getElementById('btn-bet').disabled = true;
-  document.getElementById('btn-call').disabled = true;
-  document.getElementById('btn-allin').disabled = true;
   document.getElementById('btn-bet').style.display = '';
+  document.getElementById('btn-call').disabled = true;
   document.getElementById('btn-call').style.display = 'none';
+  document.getElementById('btn-allin').disabled = true;
   document.getElementById('btn-allin').style.display = 'none';
   document.getElementById('bet-controls').style.display = 'none';
 }
@@ -1371,6 +1449,17 @@ async function handleCoinReward(winner) {
 }
 
 function checkEliminations() {
+  if (isCoinMode()) {
+    // In coin mode 2-player, reset chips when someone hits 0
+    const busted = state.players.find(p => p.chips <= 0 && !p.eliminated);
+    if (busted) {
+      for (const p of state.players) {
+        p.chips = 10;
+      }
+      addLog('チップリセット！ 両者10枚に戻る');
+    }
+    return;
+  }
   for (const p of state.players) {
     if (p.chips <= 0 && !p.eliminated) {
       p.eliminated = true;
@@ -1382,7 +1471,18 @@ function checkEliminations() {
 async function showResult(winner, handResult, byFold) {
   state.phase = PHASES.RESULT;
 
-  // Check for game over
+  // Quick match: game over when someone has 0 chips
+  if (isQuickMode()) {
+    const loser = state.players.find(p => p.chips <= 0);
+    if (loser) {
+      renderAll();
+      const gameWinner = state.players.find(p => p.chips > 0);
+      showGameOver(gameWinner);
+      return;
+    }
+  }
+
+  // Coin mode: check for 3 coins
   if (isCoinMode()) {
     const gameWinner = state.players.find(p => p.coins >= 3);
     if (gameWinner) {
@@ -1392,19 +1492,20 @@ async function showResult(winner, handResult, byFold) {
     }
   }
 
-  // Check if only one player remains (both modes)
-  const alive = alivePlayers();
-  if (alive.length <= 1) {
-    renderAll();
-    showGameOver(alive[0]);
-    return;
-  }
-
-  // In 3+ player mode, if human player is eliminated → game over
-  if (!isCoinMode() && state.players[0].eliminated) {
-    renderAll();
-    showGameOver(null, true);
-    return;
+  // Check if only one player remains (elimination modes)
+  if (!isQuickMode() && !isCoinMode()) {
+    const alive = alivePlayers();
+    if (alive.length <= 1) {
+      renderAll();
+      showGameOver(alive[0]);
+      return;
+    }
+    // Human player eliminated in 3+ player mode
+    if (state.players[0].eliminated) {
+      renderAll();
+      showGameOver(null, true);
+      return;
+    }
   }
 
   // Show result overlay
@@ -1448,30 +1549,39 @@ function showGameOver(winner, humanEliminated) {
   const title = document.getElementById('gameover-title');
   const text = document.getElementById('gameover-text');
 
-  if (humanEliminated) {
-    // Human player eliminated in 3+ player mode
-    title.textContent = '💀 ゲームオーバー';
-    text.textContent = 'チップがなくなった！ 海賊たちに全財産を奪われてしまった…';
-  } else if (isCoinMode()) {
-    // 2-player coin mode
+  if (isQuickMode()) {
+    // Quick match mode
     if (winner && winner.isHuman) {
-      title.textContent = '🏆 大勝利！';
-      text.textContent = '金貨を3枚集めて海賊王になった！';
-    } else if (winner) {
-      title.textContent = '💀 敗北…';
-      text.textContent = `${winner.name} が金貨3枚を集めて勝利した…`;
+      title.textContent = '🏆 勝利！';
+      text.textContent = 'チップを全部奪った！';
     } else {
       title.textContent = '💀 敗北…';
-      text.textContent = 'チップが尽きてしまった…';
+      text.textContent = 'チップを全部奪われた…';
     }
+  } else if (isCoinMode()) {
+    // Coin battle 1vs1
+    if (winner && winner.isHuman) {
+      title.textContent = '🥇 金貨バトル勝利！';
+      text.textContent = `金貨を ${winner.coins} 枚獲得！`;
+    } else if (winner) {
+      title.textContent = '💀 金貨バトル敗北…';
+      text.textContent = '金貨を奪われた…';
+    } else {
+      title.textContent = '🤝 引き分け！';
+      text.textContent = 'お互い金貨を分け合った';
+    }
+  } else if (humanEliminated) {
+    // 3+ player: human eliminated
+    title.textContent = '💀 脱落…';
+    text.textContent = 'チップがなくなった…';
   } else {
     // 3+ player chip elimination mode
     if (winner && winner.isHuman) {
-      title.textContent = '🏆 大勝利！';
-      text.textContent = '全員のチップを奪って海賊王になった！';
+      title.textContent = '🥇 優勝！';
+      text.textContent = '最後まで生き残った！';
     } else if (winner) {
       title.textContent = '💀 敗北…';
-      text.textContent = `${winner.name} が全員のチップを奪って勝利した…`;
+      text.textContent = `${winner.name} が最後まで生き残って勝利した…`;
     } else {
       title.textContent = '💀 ゲームオーバー';
       text.textContent = 'チップがなくなった！ 海賊たちに全財産を奪われてしまった…';
@@ -1698,7 +1808,10 @@ document.getElementById('btn-bet').addEventListener('click', () => {
   const player = state.players[0];
   const isBet = state.currentBet === 0;
   const callCost = isBet ? 0 : (state.currentBet - player.bet);
-  const maxBet = Math.max(1, player.chips - callCost);
+  const maxTarget = getMaxBetTarget(player);
+  // Max raise/bet amount: capped so total bet doesn't exceed opponent's stack
+  const maxTotalBet = Math.min(player.chips + player.bet, maxTarget);
+  const maxBet = Math.max(1, maxTotalBet - player.bet - callCost);
 
   document.getElementById('bet-controls').style.display = 'flex';
   document.getElementById('btn-fold').style.display = 'none';
@@ -1753,13 +1866,15 @@ document.getElementById('btn-allin').addEventListener('click', () => {
   if (!humanResolve) return;
   disableActions();
   const player = state.players[0];
+  const maxTarget = getMaxBetTarget(player);
+  const allinTotal = Math.min(player.chips, Math.max(0, maxTarget - player.bet));
   const resolve = humanResolve;
   humanResolve = null;
   if (state.currentBet === 0) {
-    resolve({ action: 'bet', amount: player.chips });
+    resolve({ action: 'bet', amount: allinTotal });
   } else {
-    const callCost = state.currentBet - player.bet;
-    const raiseAmount = player.chips - callCost;
+    const callCost = Math.min(state.currentBet - player.bet, player.chips);
+    const raiseAmount = Math.max(0, allinTotal - callCost);
     if (raiseAmount > 0) {
       resolve({ action: 'raise', amount: raiseAmount });
     } else {
@@ -1783,6 +1898,27 @@ document.getElementById('guide-toggle').addEventListener('click', () => {
 document.getElementById('guide-close').addEventListener('click', () => {
   document.getElementById('hand-guide').classList.remove('visible');
 });
+
+// Mode selection
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    const mode = btn.dataset.mode;
+    const desc = document.getElementById('mode-description');
+    const cpuSelect = document.getElementById('cpu-count-select');
+    if (mode === 'quick') {
+      desc.innerHTML = '⚔️ チップが0になったら即終了！シンプルで短時間の勝負';
+      cpuSelect.style.display = 'none';
+    } else {
+      desc.innerHTML = '👥 人数によるルールの違い<br>■ 2人：金貨を3枚集めたら勝利！<br>■ 3人以上：チップがなくなったら脱落。最後の1人が優勝！';
+      cpuSelect.style.display = 'flex';
+    }
+  });
+});
+
+// Initialize: quick mode hides CPU count
+document.getElementById('cpu-count-select').style.display = 'none';
 
 </script>
 </body>
