@@ -1063,6 +1063,16 @@ html, body {
       </div>
     </div>
 
+    <!-- Step 3: CPU Level -->
+    <div id="step3" class="step-area" style="display:none;">
+      <label class="step-label">CPUの強さ</label>
+      <div class="step-buttons">
+        <button class="step-btn cpu-level-btn" data-level="easy">🟢 ひよっこ</button>
+        <button class="step-btn cpu-level-btn selected" data-level="normal">🟡 一人前</button>
+        <button class="step-btn cpu-level-btn" data-level="hard">🔴 船長</button>
+      </div>
+    </div>
+
     <button class="pirate-btn" id="btn-start" disabled>出航する！</button>
   </div>
 </div>
@@ -1121,6 +1131,7 @@ let state = null;
 let selectedVsMode = null;
 let selectedGameMode = null;
 let selectedCpuCount = 1;
+let selectedCpuLevel = 'normal';
 
 function createInitialState(cpuCount, gameMode) {
   const players = [{
@@ -1153,6 +1164,7 @@ function createInitialState(cpuCount, gameMode) {
     lastRaiserIndex: -1,
     actedThisRound: new Set(),
     gameMode,
+    cpuLevel: selectedCpuLevel || 'normal',
     // Coin battle set tracking (1v1)
     set: 1,
     playerCoins: 0,
@@ -1214,67 +1226,163 @@ function compareHands(p1, p2, community) {
   return sr1 > sr2 ? 1 : sr1 < sr2 ? -1 : 0;
 }
 
-// ===== CPU AI =====
+// ===== CPU AI (GTO-based) =====
+const HAND_SCORES = {
+  'ロイヤル':   100,
+  'ストフラ':    85,
+  'バディ':      70,
+  'フラ':        55,
+  'スト':        40,
+  'ハイカード':  20,
+};
+
 function calcScore(myCard, communityCard) {
   const result = classifyHand(myCard, communityCard);
-  const rankScores = {
-    'ロイヤル':   100,
-    'ストフラ':    85,
-    'バディ':      70,
-    'フラ':        55,
-    'スト':        40,
-    'ハイカード':  20,
-  };
-  return rankScores[result.name] ?? 20;
+  return HAND_SCORES[result.name] ?? 20;
 }
 
-function cpuBetAmount(score, cpuChips, currentBet) {
-  const ratio = score >= 70 ? 0.5 : 0.3;
-  const amount = Math.max(1, Math.floor(cpuChips * ratio));
-  return currentBet > 0 ? currentBet + amount : amount;
+function getStrengthTier(score) {
+  if (score >= 85) return 'strong';
+  if (score >= 55) return 'medium';
+  return 'weak';
+}
+
+// Level 1: ひよっこ海賊 (beginner)
+const CPU_EASY = {
+  strong: {
+    noBet:  { bet: 0.5, check: 0.5 },
+    vsBet:  { call: 0.7, raise: 0.1, fold: 0.2 },
+  },
+  medium: {
+    noBet:  { bet: 0.3, check: 0.7 },
+    vsBet:  { call: 0.4, raise: 0.0, fold: 0.6 },
+  },
+  weak: {
+    noBet:  { bet: 0.1, check: 0.9 },
+    vsBet:  { call: 0.1, raise: 0.0, fold: 0.9 },
+  },
+  betSizing: 0.3,
+  bluffFreq: 0.05,
+  mdfAdherence: 0.5,
+};
+
+// Level 2: 一人前の海賊 (normal, default)
+const CPU_NORMAL = {
+  strong: {
+    noBet:  { bet: 0.8, check: 0.2 },
+    vsBet:  { call: 0.4, raise: 0.6, fold: 0.0 },
+  },
+  medium: {
+    noBet:  { bet: 0.5, check: 0.5 },
+    vsBet:  { call: 0.6, raise: 0.2, fold: 0.2 },
+  },
+  weak: {
+    noBet:  { bet: 0.2, check: 0.8 },
+    vsBet:  { call: 0.35, raise: 0.0, fold: 0.65 },
+  },
+  betSizing: 0.5,
+  bluffFreq: 0.2,
+  mdfAdherence: 0.8,
+};
+
+// Level 3: 海賊船長 (hard)
+const CPU_HARD = {
+  strong: {
+    noBet:  { bet: 0.9, check: 0.1 },
+    vsBet:  { call: 0.2, raise: 0.8, fold: 0.0 },
+  },
+  medium: {
+    noBet:  { bet: 0.65, check: 0.35 },
+    vsBet:  { call: 0.65, raise: 0.25, fold: 0.1 },
+  },
+  weak: {
+    noBet:  { bet: 0.35, check: 0.65 },
+    vsBet:  { call: 0.4, raise: 0.1, fold: 0.5 },
+  },
+  betSizing: 0.75,
+  bluffFreq: 0.35,
+  mdfAdherence: 1.0,
+};
+
+const CPU_LEVELS = { easy: CPU_EASY, normal: CPU_NORMAL, hard: CPU_HARD };
+
+function getCpuLevel() {
+  return CPU_LEVELS[state.cpuLevel] || CPU_NORMAL;
+}
+
+// MDF: Minimum Defense Frequency
+function calcMDF(pot, betAmount) {
+  return pot / (pot + betAmount);
+}
+
+// GTO-based bet sizing: pot percentage
+function calcCpuBetAmount(level, pot, cpuChips, opponentChips, isRaise, currentBet) {
+  let amount = Math.max(1, Math.round(pot * level.betSizing));
+  if (isRaise) {
+    amount = currentBet + Math.max(1, Math.round(pot * level.betSizing));
+  }
+  const maxAmount = Math.min(cpuChips, opponentChips);
+  return Math.min(amount, maxAmount);
 }
 
 function cpuDecide(player, canCheck, currentBet, communityCard) {
   const score = calcScore(player.hand, communityCard);
+  const tier = getStrengthTier(score);
+  const level = getCpuLevel();
+  const tierConfig = level[tier];
   const callAmount = Math.min(currentBet - player.bet, player.chips);
-  const roll = Math.random();
   const maxTarget = getMaxBetTarget(player);
+  const roll = Math.random();
+
+  // Opponent for bet sizing cap
+  const opponents = state.players.filter(p => p.id !== player.id && !p.eliminated && !p.folded);
+  const opponentChips = opponents.length > 0 ? Math.max(...opponents.map(p => p.chips + p.bet)) : player.chips;
 
   if (currentBet === 0) {
-    // No bet yet — CPU acts first or after checks
-    if (score >= 70) {
-      // Strong: bet
-      let amount = Math.min(cpuBetAmount(score, player.chips, 0), player.chips);
+    // === No bet to face ===
+    const probs = tierConfig.noBet;
+
+    // For weak hands, apply bluff frequency
+    let betProb = probs.bet;
+    if (tier === 'weak') {
+      betProb = level.bluffFreq;
+    }
+
+    if (roll < betProb) {
+      // Bet
+      let amount = calcCpuBetAmount(level, state.pot, player.chips, opponentChips, false, 0);
       amount = Math.min(amount, maxTarget - player.bet);
       return amount > 0 ? { action: 'bet', amount } : { action: 'check' };
-    } else if (score >= 40) {
-      // Medium: 50% bet, 50% check
-      if (roll < 0.5) {
-        let amount = Math.min(cpuBetAmount(score, player.chips, 0), player.chips);
-        amount = Math.min(amount, maxTarget - player.bet);
-        return amount > 0 ? { action: 'bet', amount } : { action: 'check' };
-      }
-      return { action: 'check' };
-    } else {
-      // Weak: 80% check, 20% fold
-      return roll < 0.8 ? { action: 'check' } : { action: 'fold' };
     }
+    return { action: 'check' };
   } else {
-    // Facing a bet
-    if (score >= 70) {
-      // Strong: 40% raise, 60% call
-      if (roll < 0.4 && player.chips > callAmount) {
+    // === Facing a bet ===
+    let probs = { ...tierConfig.vsBet };
+
+    // Apply MDF adjustment: ensure we don't fold too much
+    const mdf = calcMDF(state.pot, callAmount);
+    const adjustedMDF = mdf * level.mdfAdherence;
+    const defenseFreq = probs.call + probs.raise;
+    if (defenseFreq < adjustedMDF && probs.fold > 0) {
+      // Boost call probability to meet MDF
+      const deficit = adjustedMDF - defenseFreq;
+      probs.call = Math.min(1.0, probs.call + deficit);
+      probs.fold = Math.max(0, 1.0 - probs.call - probs.raise);
+    }
+
+    if (roll < probs.call) {
+      return { action: 'call' };
+    } else if (roll < probs.call + probs.raise) {
+      // Raise
+      if (player.chips > callAmount) {
         const maxRaise = Math.min(player.chips - callAmount, maxTarget - currentBet);
-        let raiseAmount = Math.min(cpuBetAmount(score, player.chips - callAmount, 0), maxRaise);
+        let raiseAmount = calcCpuBetAmount(level, state.pot, player.chips - callAmount, opponentChips, false, 0);
+        raiseAmount = Math.min(raiseAmount, maxRaise);
         return raiseAmount > 0 ? { action: 'raise', amount: raiseAmount } : { action: 'call' };
       }
       return { action: 'call' };
-    } else if (score >= 40) {
-      // Medium: 70% call, 30% fold
-      return roll < 0.7 ? { action: 'call' } : { action: 'fold' };
     } else {
-      // Weak: 40% call, 60% fold
-      return roll < 0.4 ? { action: 'call' } : { action: 'fold' };
+      return { action: 'fold' };
     }
   }
 }
@@ -2139,11 +2247,15 @@ document.querySelectorAll('#step1 .step-btn').forEach(btn => {
     document.querySelectorAll('#step1 .step-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     selectedVsMode = btn.dataset.vs;
-    // Reset step 2 selections
+    // Reset step 2 & 3 selections
     selectedGameMode = null;
     selectedCpuCount = 1;
+    selectedCpuLevel = 'normal';
     document.querySelectorAll('.mode-card').forEach(b => b.classList.remove('selected'));
     document.querySelectorAll('.cpu-count-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('.cpu-level-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelector('.cpu-level-btn[data-level="normal"]').classList.add('selected');
+    document.getElementById('step3').style.display = 'none';
     document.getElementById('btn-start').disabled = true;
     // Show step 2 with fade-in
     const step2 = document.getElementById('step2');
@@ -2163,25 +2275,45 @@ document.querySelectorAll('#step1 .step-btn').forEach(btn => {
   });
 });
 
-// Step 2 (1v1): Mode card selection
+// Step 2 (1v1): Mode card selection → show step 3
 document.querySelectorAll('.mode-card').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.mode-card').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     selectedGameMode = btn.dataset.mode;
     selectedCpuCount = 1;
-    document.getElementById('btn-start').disabled = false;
+    showStep3();
   });
 });
 
-// Step 2 (multi): CPU count selection
+// Step 2 (multi): CPU count selection → show step 3
 document.querySelectorAll('.cpu-count-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.cpu-count-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     selectedCpuCount = parseInt(btn.dataset.cpu);
     selectedGameMode = 'survival';
-    document.getElementById('btn-start').disabled = false;
+    showStep3();
+  });
+});
+
+function showStep3() {
+  const step3 = document.getElementById('step3');
+  step3.style.display = 'flex';
+  step3.classList.remove('step-fade-in');
+  void step3.offsetWidth;
+  step3.classList.add('step-fade-in');
+  // Default level is 'normal' (pre-selected)
+  selectedCpuLevel = 'normal';
+  document.getElementById('btn-start').disabled = false;
+}
+
+// Step 3: CPU level selection
+document.querySelectorAll('.cpu-level-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cpu-level-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedCpuLevel = btn.dataset.level;
   });
 });
 
@@ -2222,10 +2354,14 @@ function returnToTitle() {
   selectedVsMode = null;
   selectedGameMode = null;
   selectedCpuCount = 1;
+  selectedCpuLevel = 'normal';
   document.querySelectorAll('#step1 .step-btn').forEach(b => b.classList.remove('selected'));
   document.querySelectorAll('.mode-card').forEach(b => b.classList.remove('selected'));
   document.querySelectorAll('.cpu-count-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.cpu-level-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelector('.cpu-level-btn[data-level="normal"]').classList.add('selected');
   document.getElementById('step2').style.display = 'none';
+  document.getElementById('step3').style.display = 'none';
   document.getElementById('btn-start').disabled = true;
   document.getElementById('start-screen').style.display = 'flex';
 }
