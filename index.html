@@ -804,7 +804,7 @@ html, body {
     <div id="gameover-overlay">
       <h2 id="gameover-title"></h2>
       <div id="gameover-text"></div>
-      <button class="pirate-btn" id="btn-new-game">もう一度遊ぶ</button>
+      <button class="pirate-btn" id="btn-new-game">もう一度挑戦</button>
     </div>
   </div>
 
@@ -1362,6 +1362,13 @@ async function showResult(winner, handResult, byFold) {
     return;
   }
 
+  // In 3+ player mode, if human player is eliminated → game over
+  if (!isCoinMode() && state.players[0].eliminated) {
+    renderAll();
+    showGameOver(null, true);
+    return;
+  }
+
   // Show result overlay
   const overlay = document.getElementById('result-overlay');
   const title = document.getElementById('result-title');
@@ -1398,12 +1405,16 @@ async function showResult(winner, handResult, byFold) {
   }
 }
 
-function showGameOver(winner) {
+function showGameOver(winner, humanEliminated) {
   const overlay = document.getElementById('gameover-overlay');
   const title = document.getElementById('gameover-title');
   const text = document.getElementById('gameover-text');
 
-  if (isCoinMode()) {
+  if (humanEliminated) {
+    // Human player eliminated in 3+ player mode
+    title.textContent = '💀 ゲームオーバー';
+    text.textContent = 'チップがなくなった！ 海賊たちに全財産を奪われてしまった…';
+  } else if (isCoinMode()) {
     // 2-player coin mode
     if (winner && winner.isHuman) {
       title.textContent = '🏆 大勝利！';
@@ -1424,8 +1435,8 @@ function showGameOver(winner) {
       title.textContent = '💀 敗北…';
       text.textContent = `${winner.name} が全員のチップを奪って勝利した…`;
     } else {
-      title.textContent = '💀 敗北…';
-      text.textContent = 'チップが尽きてしまった…';
+      title.textContent = '💀 ゲームオーバー';
+      text.textContent = 'チップがなくなった！ 海賊たちに全財産を奪われてしまった…';
     }
   }
 
