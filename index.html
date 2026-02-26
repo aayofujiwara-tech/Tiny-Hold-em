@@ -75,11 +75,11 @@ html, body {
 }
 
 .gold-slot {
-  width: 24px; height: 24px;
+  width: 28px; height: 28px;
   border-radius: 50%;
   border: 2px solid var(--gold-dim);
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   background: rgba(0,0,0,0.3);
 }
 .gold-slot.earned { background: var(--gold); border-color: var(--gold); }
@@ -130,21 +130,24 @@ html, body {
 .cpu-slot.eliminated { display: none; }
 
 .cpu-name {
-  font-size: 0.7rem;
+  font-size: 1rem;
   color: var(--text-dim);
   display: flex;
   align-items: center;
   gap: 3px;
 }
-.cpu-name .dealer-hat { font-size: 0.8rem; }
+.cpu-name .dealer-hat { font-size: 1rem; }
 
 .cpu-chips {
-  font-size: 0.65rem;
-  color: var(--gold-dim);
+  font-family: 'Pirata One', cursive;
+  font-size: 1.4rem;
+  color: var(--parchment);
+  font-weight: 700;
+  line-height: 1.1;
 }
 
 .cpu-coins {
-  font-size: 0.6rem;
+  font-size: 0.9rem;
   display: flex;
   gap: 1px;
 }
@@ -186,11 +189,11 @@ html, body {
 .card:not(.face-up) .card-front { display: none; }
 .card:not(.face-up) .card-back { display: flex; }
 
-.card-front .card-suit { font-size: 1.4rem; }
+.card-front .card-suit { font-size: 1.6rem; }
 .card-front .card-rank {
   font-family: 'Crimson Pro', serif;
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   line-height: 1;
 }
 .card-front.suit-red .card-rank { color: var(--red); }
@@ -224,8 +227,8 @@ html, body {
   width: 72px;
   height: 104px;
 }
-#player-area .card-front .card-suit { font-size: 1.8rem; }
-#player-area .card-front .card-rank { font-size: 1.3rem; }
+#player-area .card-front .card-suit { font-size: 2rem; }
+#player-area .card-front .card-rank { font-size: 1.8rem; }
 
 /* ===== Community Area ===== */
 #community-area {
@@ -248,27 +251,41 @@ html, body {
   width: 66px;
   height: 94px;
 }
-#community-card-wrap .card-front .card-suit { font-size: 1.6rem; }
-#community-card-wrap .card-front .card-rank { font-size: 1.2rem; }
+#community-card-wrap .card-front .card-suit { font-size: 1.8rem; }
+#community-card-wrap .card-front .card-rank { font-size: 1.6rem; }
 
 #pot-display {
-  font-size: 0.85rem;
-  color: var(--gold);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
+  background: rgba(0,0,0,0.4);
+  border-radius: 10px;
+  padding: 6px 18px;
+}
+#pot-display .pot-label {
+  font-size: 1rem;
+  color: var(--gold-dim);
+  font-weight: 600;
+}
+#pot-display .pot-value {
+  font-family: 'Pirata One', cursive;
+  font-size: 2rem;
+  color: var(--gold);
+  font-weight: 700;
+  line-height: 1.1;
 }
 
 #phase-label {
   font-family: 'Pirata One', cursive;
-  font-size: 0.8rem;
+  font-size: 1rem;
   color: var(--text-dim);
   text-align: center;
 }
 
 #hand-result {
   font-family: 'Pirata One', cursive;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   color: var(--gold);
   text-align: center;
   min-height: 1.4em;
@@ -289,8 +306,8 @@ html, body {
 #player-info {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.8rem;
+  gap: 12px;
+  font-size: 1rem;
 }
 
 #player-info .player-name {
@@ -300,23 +317,23 @@ html, body {
 
 #player-chips-display {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 3px;
 }
-
-.chip-dot {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  background: #555;
-  border: 1px solid #777;
+#player-chips-display .chips-label {
+  font-size: 0.9rem;
+  color: var(--text-dim);
 }
-.chip-dot.active {
-  background: var(--gold);
-  border-color: var(--gold-dim);
+#player-chips-display .chips-value {
+  font-family: 'Pirata One', cursive;
+  font-size: 1.8rem;
+  color: var(--parchment);
+  font-weight: 700;
+  line-height: 1.1;
 }
 
 #player-coins-display {
-  font-size: 0.75rem;
+  font-size: 1rem;
 }
 
 /* ===== Action Bar ===== */
@@ -333,12 +350,13 @@ html, body {
 
 .action-btn {
   font-family: 'Pirata One', cursive;
-  font-size: 0.95rem;
-  padding: 8px 16px;
+  font-size: 1.1rem;
+  padding: 14px 20px;
   border: 2px solid;
   border-radius: 8px;
   cursor: pointer;
-  min-width: 70px;
+  min-width: 80px;
+  min-height: 48px;
   text-align: center;
   background: transparent;
 }
@@ -380,23 +398,23 @@ html, body {
 
 #bet-amount {
   font-family: 'Crimson Pro', serif;
-  font-size: 1rem;
-  width: 40px;
+  font-size: 1.3rem;
+  width: 44px;
   text-align: center;
   background: rgba(255,255,255,0.08);
   border: 1px solid var(--gold-dim);
   border-radius: 4px;
   color: var(--gold);
-  padding: 4px;
+  padding: 6px;
 }
 
 .bet-adj {
-  width: 28px; height: 28px;
+  width: 36px; height: 36px;
   border-radius: 50%;
   border: 1px solid var(--gold-dim);
   background: transparent;
   color: var(--gold);
-  font-size: 1rem;
+  font-size: 1.1rem;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -405,13 +423,14 @@ html, body {
 
 #btn-bet-confirm {
   font-family: 'Pirata One', cursive;
-  font-size: 0.85rem;
-  padding: 4px 12px;
+  font-size: 1rem;
+  padding: 8px 16px;
   border: 2px solid var(--gold);
   border-radius: 6px;
   background: var(--gold);
   color: var(--bg);
   cursor: pointer;
+  min-height: 40px;
 }
 
 /* ===== Start / New Round / Settings ===== */
@@ -486,7 +505,7 @@ html, body {
   background: rgba(10,22,40,0.9);
   border-top: 1px solid #1a3050;
   padding: 6px 10px;
-  font-size: 0.7rem;
+  font-size: 0.9rem;
   color: var(--text-dim);
   display: none;
   z-index: 20;
@@ -494,20 +513,20 @@ html, body {
 #game-log.visible { display: block; }
 
 #game-log p {
-  margin: 2px 0;
-  line-height: 1.3;
+  margin: 3px 0;
+  line-height: 1.4;
 }
 
 #log-toggle {
   position: absolute;
   bottom: 6px;
   right: 6px;
-  width: 28px; height: 28px;
+  width: 32px; height: 32px;
   border-radius: 50%;
   border: 1px solid var(--text-dim);
   background: rgba(10,22,40,0.7);
   color: var(--text-dim);
-  font-size: 0.7rem;
+  font-size: 0.9rem;
   cursor: pointer;
   z-index: 21;
   display: flex;
@@ -537,7 +556,7 @@ html, body {
 }
 
 #result-details {
-  font-size: 0.85rem;
+  font-size: 1rem;
   color: var(--text);
   text-align: center;
   line-height: 1.6;
@@ -597,7 +616,7 @@ html, body {
 
 #hand-guide table {
   width: 100%;
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   border-collapse: collapse;
 }
 
@@ -625,12 +644,12 @@ html, body {
   position: absolute;
   top: 6px;
   right: 6px;
-  width: 28px; height: 28px;
+  width: 32px; height: 32px;
   border-radius: 50%;
   border: 1px solid var(--text-dim);
   background: rgba(10,22,40,0.7);
   color: var(--text-dim);
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   cursor: pointer;
   z-index: 21;
   display: flex;
@@ -641,11 +660,14 @@ html, body {
 /* ===== Responsive ===== */
 @media (max-width: 374px) {
   .card { width: 48px; height: 68px; }
-  .card-front .card-suit { font-size: 1.1rem; }
-  .card-front .card-rank { font-size: 0.9rem; }
+  .card-front .card-suit { font-size: 1.3rem; }
+  .card-front .card-rank { font-size: 1.1rem; }
   #player-area .card { width: 60px; height: 86px; }
   #community-card-wrap .card { width: 56px; height: 80px; }
-  .action-btn { padding: 6px 10px; font-size: 0.85rem; min-width: 58px; }
+  .action-btn { padding: 10px 14px; font-size: 1rem; min-width: 64px; min-height: 44px; }
+  .cpu-chips { font-size: 1.2rem; }
+  #pot-display .pot-value { font-size: 1.6rem; }
+  #player-chips-display .chips-value { font-size: 1.5rem; }
 }
 
 @media (min-height: 700px) {
@@ -1415,12 +1437,12 @@ function renderCPU() {
       }
     }
 
-    html += `<div class="cpu-chips">⚫×${p.chips}</div>`;
+    html += `<div class="cpu-chips">${p.chips}</div>`;
     if (isCoinMode() && p.coins > 0) {
       html += `<div class="cpu-coins">${'🪙'.repeat(p.coins)}</div>`;
     }
     if (p.bet > 0 && !p.folded) {
-      html += `<div style="font-size:0.6rem; color:var(--gold);">bet:${p.bet}</div>`;
+      html += `<div style="font-size:1.3rem; color:var(--gold); font-weight:700;">bet:${p.bet}</div>`;
     }
     html += '</div>';
   }
@@ -1451,7 +1473,7 @@ function renderCommunity() {
     wrap.innerHTML = '';
   }
 
-  potDisplay.innerHTML = state.pot > 0 ? `ポット: ⚫×${state.pot}` : '';
+  potDisplay.innerHTML = state.pot > 0 ? `<span class="pot-label">POT</span><span class="pot-value">🪙 ${state.pot}</span>` : '';
 
   // Show hand result for human player
   if ((state.phase === PHASES.BET || state.phase === PHASES.SHOWDOWN || state.phase === PHASES.RESULT) && state.players[0].hand && state.communityCard && !state.players[0].folded) {
@@ -1474,11 +1496,7 @@ function renderPlayer() {
   document.getElementById('player-name-label').textContent = `${dealerIcon}${human.name}`;
 
   // Chips
-  let chipsHTML = '';
-  for (let i = 0; i < 10; i++) {
-    chipsHTML += `<span class="chip-dot ${i < human.chips ? 'active' : ''}"></span>`;
-  }
-  document.getElementById('player-chips-display').innerHTML = chipsHTML;
+  document.getElementById('player-chips-display').innerHTML = `<span class="chips-label">チップ</span><span class="chips-value">${human.chips}</span>`;
 
   // Coins (only in coin mode)
   document.getElementById('player-coins-display').textContent = isCoinMode() && human.coins > 0 ? '🪙'.repeat(human.coins) : '';
