@@ -499,25 +499,11 @@ html, body {
   max-width: 280px;
 }
 
-#cpu-count-select {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-#cpu-count-select label {
-  color: var(--text-dim);
-  font-size: 0.85rem;
-}
-
-#cpu-count-select select {
-  font-family: 'Crimson Pro', serif;
-  font-size: 1rem;
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid var(--gold-dim);
-  background: var(--bg);
-  color: var(--gold);
+/* Disabled start button */
+#btn-start:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .pirate-btn {
@@ -535,38 +521,98 @@ html, body {
   touch-action: manipulation;
 }
 
-/* ===== Mode Select ===== */
-#mode-select {
+/* ===== Start Screen Steps ===== */
+.step-area {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
 }
 
-#mode-buttons {
+.step-label {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  font-family: 'Crimson Pro', serif;
+  letter-spacing: 0.05em;
+}
+
+.step-buttons {
   display: flex;
   gap: 8px;
 }
 
-.mode-btn {
+.step-btn {
   font-family: 'Pirata One', cursive;
   font-size: 0.95rem;
-  padding: 10px 14px;
+  padding: 10px 18px;
   border: 2px solid var(--gold-dim);
   border-radius: 8px;
   background: transparent;
   color: var(--text-dim);
   cursor: pointer;
-  min-width: 130px;
+  min-width: 100px;
   text-align: center;
-  line-height: 1.4;
   touch-action: manipulation;
 }
 
-.mode-btn.selected {
+.step-btn.selected {
   border-color: var(--gold);
   color: var(--gold);
   background: rgba(240,192,64,0.1);
+}
+
+/* Mode cards (1v1 step 2) */
+#mode-cards {
+  display: flex;
+  gap: 10px;
+}
+
+.mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 2px solid var(--gold-dim);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  min-width: 130px;
+  text-align: center;
+  touch-action: manipulation;
+}
+
+.mode-card.selected {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(240,192,64,0.1);
+}
+
+.mode-card-icon {
+  font-size: 1.5rem;
+}
+
+.mode-card-title {
+  font-family: 'Pirata One', cursive;
+  font-size: 1rem;
+}
+
+.mode-card-desc {
+  font-size: 0.65rem;
+  font-family: 'Crimson Pro', serif;
+  color: var(--text-dim);
+  opacity: 0.8;
+}
+
+/* Step 2 fade-in */
+.step-fade-in {
+  animation: stepFadeIn 0.3s ease forwards;
+}
+
+@keyframes stepFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ===== Game Log ===== */
@@ -978,27 +1024,46 @@ html, body {
     <h2>🏴‍☠️ タイニーホールデム</h2>
     <p>海賊たちのミニポーカー！</p>
 
-    <div id="mode-select">
-      <label style="color:var(--text-dim); font-size:0.85rem;">ゲームモード:</label>
-      <div id="mode-buttons">
-        <button class="mode-btn selected" data-mode="quick">⚔️ クイックマッチ<br><span style="font-size:0.65rem; font-family:'Crimson Pro',serif;">1回勝負・チップ奪い合い</span></button>
-        <button class="mode-btn" data-mode="coin">🪙 金貨バトル<br><span style="font-size:0.65rem; font-family:'Crimson Pro',serif;">2セット先取で勝利</span></button>
+    <!-- Step 1: VS Mode -->
+    <div id="step1" class="step-area">
+      <label class="step-label">STEP 1 — 対戦人数</label>
+      <div class="step-buttons">
+        <button class="step-btn" data-vs="1v1">⚔️ 1vs1</button>
+        <button class="step-btn" data-vs="multi">👥 みんなで</button>
       </div>
     </div>
 
-    <div id="cpu-count-select">
-      <label>CPU人数:</label>
-      <select id="cpu-count">
-        <option value="1" selected>1人</option>
-        <option value="2">2人</option>
-        <option value="3">3人</option>
-        <option value="4">4人</option>
-      </select>
+    <!-- Step 2 (hidden until Step 1 selected) -->
+    <div id="step2" class="step-area" style="display:none;">
+      <!-- 1v1: mode selection -->
+      <div id="step2-1v1" style="display:none;">
+        <label class="step-label">STEP 2 — ゲームモード</label>
+        <div id="mode-cards">
+          <button class="mode-card" data-mode="quick">
+            <span class="mode-card-icon">⚔️</span>
+            <span class="mode-card-title">クイックマッチ</span>
+            <span class="mode-card-desc">1回勝負・チップ奪い合い</span>
+          </button>
+          <button class="mode-card" data-mode="coin">
+            <span class="mode-card-icon">🪙</span>
+            <span class="mode-card-title">金貨バトル</span>
+            <span class="mode-card-desc">2セット先取で勝利</span>
+          </button>
+        </div>
+      </div>
+      <!-- Multi: CPU count -->
+      <div id="step2-multi" style="display:none;">
+        <label class="step-label">STEP 2 — CPU人数</label>
+        <div class="step-buttons">
+          <button class="step-btn cpu-count-btn" data-cpu="2">2人</button>
+          <button class="step-btn cpu-count-btn" data-cpu="3">3人</button>
+          <button class="step-btn cpu-count-btn" data-cpu="4">4人</button>
+          <button class="step-btn cpu-count-btn" data-cpu="5">5人</button>
+        </div>
+      </div>
     </div>
-    <p id="mode-description" style="font-size:0.75rem; color:var(--text-dim); max-width:280px; text-align:center; line-height:1.5;">
-      ⚔️ チップが0になったら即終了！シンプルで短時間の勝負
-    </p>
-    <button class="pirate-btn" id="btn-start">出航する！</button>
+
+    <button class="pirate-btn" id="btn-start" disabled>出航する！</button>
   </div>
 </div>
 
@@ -1031,7 +1096,7 @@ const PHASES = {
   RESULT: 'RESULT',
 };
 
-const CPU_NAMES = ['海賊A', '海賊B', '海賊C', '海賊D'];
+const CPU_NAMES = ['海賊A', '海賊B', '海賊C', '海賊D', '海賊E'];
 
 const HAND_NAMES = {
   6: 'ロイヤル',
@@ -1053,6 +1118,9 @@ const HAND_NAMES_EN = {
 
 // ===== Game State =====
 let state = null;
+let selectedVsMode = null;
+let selectedGameMode = null;
+let selectedCpuCount = 1;
 
 function createInitialState(cpuCount, gameMode) {
   const players = [{
@@ -1241,12 +1309,10 @@ function sleep(ms) {
 }
 
 async function startGame() {
-  const selectedMode = document.querySelector('.mode-btn.selected');
-  const gameMode = selectedMode ? selectedMode.dataset.mode : 'quick';
-  let cpuCount = parseInt(document.getElementById('cpu-count').value);
-  // Quick match is 1vs1 only
-  if (gameMode === 'quick') cpuCount = 1;
+  const gameMode = selectedGameMode || 'quick';
+  const cpuCount = selectedCpuCount || 1;
   state = createInitialState(cpuCount, gameMode);
+  state.vsMode = selectedVsMode || '1v1';
   document.getElementById('start-screen').style.display = 'none';
   renderAll();
   await startRound();
@@ -2067,26 +2133,57 @@ document.getElementById('guide-close').addEventListener('click', () => {
   document.getElementById('hand-guide').classList.remove('visible');
 });
 
-// Mode selection
-document.querySelectorAll('.mode-btn').forEach(btn => {
+// Step 1: VS mode selection
+document.querySelectorAll('#step1 .step-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('#step1 .step-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
-    const mode = btn.dataset.mode;
-    const desc = document.getElementById('mode-description');
-    const cpuSelect = document.getElementById('cpu-count-select');
-    if (mode === 'quick') {
-      desc.innerHTML = '⚔️ チップが0になったら即終了！シンプルで短時間の勝負';
-      cpuSelect.style.display = 'none';
+    selectedVsMode = btn.dataset.vs;
+    // Reset step 2 selections
+    selectedGameMode = null;
+    selectedCpuCount = 1;
+    document.querySelectorAll('.mode-card').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('.cpu-count-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('btn-start').disabled = true;
+    // Show step 2 with fade-in
+    const step2 = document.getElementById('step2');
+    const step2_1v1 = document.getElementById('step2-1v1');
+    const step2_multi = document.getElementById('step2-multi');
+    step2.style.display = 'flex';
+    step2.classList.remove('step-fade-in');
+    void step2.offsetWidth;
+    step2.classList.add('step-fade-in');
+    if (selectedVsMode === '1v1') {
+      step2_1v1.style.display = 'block';
+      step2_multi.style.display = 'none';
     } else {
-      desc.innerHTML = '👥 人数によるルールの違い<br>■ 2人：2セット先取で勝利！<br>■ 3人以上：チップがなくなったら脱落。最後の1人が優勝！';
-      cpuSelect.style.display = 'flex';
+      step2_1v1.style.display = 'none';
+      step2_multi.style.display = 'block';
     }
   });
 });
 
-// Initialize: quick mode hides CPU count
-document.getElementById('cpu-count-select').style.display = 'none';
+// Step 2 (1v1): Mode card selection
+document.querySelectorAll('.mode-card').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-card').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedGameMode = btn.dataset.mode;
+    selectedCpuCount = 1;
+    document.getElementById('btn-start').disabled = false;
+  });
+});
+
+// Step 2 (multi): CPU count selection
+document.querySelectorAll('.cpu-count-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cpu-count-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedCpuCount = parseInt(btn.dataset.cpu);
+    selectedGameMode = 'survival';
+    document.getElementById('btn-start').disabled = false;
+  });
+});
 
 // Title return button
 document.getElementById('btn-title-return').addEventListener('click', () => {
@@ -2121,6 +2218,15 @@ function returnToTitle() {
   document.getElementById('game-log').classList.remove('visible');
   disableActions();
   state = null;
+  // Reset start screen step selections
+  selectedVsMode = null;
+  selectedGameMode = null;
+  selectedCpuCount = 1;
+  document.querySelectorAll('#step1 .step-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.mode-card').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.cpu-count-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('btn-start').disabled = true;
   document.getElementById('start-screen').style.display = 'flex';
 }
 
