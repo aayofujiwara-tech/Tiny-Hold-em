@@ -420,6 +420,13 @@ html, body {
 }
 #btn-call:hover:not(:disabled) { background: rgba(64,192,96,0.12); }
 
+#btn-allin {
+  color: #ff6040;
+  border-color: #ff6040;
+  display: none;
+}
+#btn-allin:hover:not(:disabled) { background: rgba(255,96,64,0.12); }
+
 #bet-controls {
   display: none;
   align-items: center;
@@ -814,9 +821,10 @@ html, body {
     <button class="action-btn" id="btn-check" disabled>チェック</button>
     <button class="action-btn" id="btn-bet" disabled>ベット</button>
     <button class="action-btn" id="btn-call" disabled>コール</button>
+    <button class="action-btn" id="btn-allin" disabled>オールイン</button>
     <div id="bet-controls">
       <button class="bet-adj" id="btn-bet-minus">−</button>
-      <input type="number" id="bet-amount" value="1" min="1" max="3" readonly>
+      <input type="number" id="bet-amount" value="1" min="1" readonly>
       <button class="bet-adj" id="btn-bet-plus">＋</button>
       <button id="btn-bet-confirm">決定</button>
       <button class="bet-adj" id="btn-bet-cancel" style="font-size:0.7rem;">✕</button>
@@ -985,47 +993,63 @@ function compareHands(p1, p2, community) {
 }
 
 // ===== CPU AI =====
-function evalHandScore(card, communityCard) {
-  const hand = classifyHand(card, communityCard);
-  let score = hand.rank * 15; // 15~90
-  score += (Math.max(card.rank, communityCard.rank) - 10) * 2; // 0~8
-  return Math.min(100, score);
+function calcScore(myCard, communityCard) {
+  const result = classifyHand(myCard, communityCard);
+  const rankScores = {
+    'ロイヤル':   100,
+    'ストフラ':    85,
+    'バディ':      70,
+    'フラ':        55,
+    'スト':        40,
+    'ハイカード':  20,
+  };
+  return rankScores[result.name] ?? 20;
+}
+
+function cpuBetAmount(score, cpuChips, currentBet) {
+  const ratio = score >= 70 ? 0.5 : 0.3;
+  const amount = Math.max(1, Math.floor(cpuChips * ratio));
+  return currentBet > 0 ? currentBet + amount : amount;
 }
 
 function cpuDecide(player, canCheck, currentBet, communityCard) {
-  const score = evalHandScore(player.hand, communityCard);
-  const callAmount = currentBet - player.bet;
+  const score = calcScore(player.hand, communityCard);
+  const callAmount = Math.min(currentBet - player.bet, player.chips);
+  const roll = Math.random();
 
-  if (score >= 75) {
-    // Strong hand: bet or raise
-    if (currentBet === 0) {
-      const betAmount = Math.min(score >= 90 ? 3 : 2, player.chips);
-      return betAmount > 0 ? { action: 'bet', amount: betAmount } : { action: 'check' };
+  if (currentBet === 0) {
+    // No bet yet — CPU acts first or after checks
+    if (score >= 70) {
+      // Strong: bet
+      const amount = Math.min(cpuBetAmount(score, player.chips, 0), player.chips);
+      return amount > 0 ? { action: 'bet', amount } : { action: 'check' };
+    } else if (score >= 40) {
+      // Medium: 50% bet, 50% check
+      if (roll < 0.5) {
+        const amount = Math.min(cpuBetAmount(score, player.chips, 0), player.chips);
+        return amount > 0 ? { action: 'bet', amount } : { action: 'check' };
+      }
+      return { action: 'check' };
     } else {
-      if (callAmount < player.chips && player.chips - callAmount >= 1) {
-        const raiseAmount = Math.min(score >= 90 ? 2 : 1, player.chips - callAmount);
-        if (raiseAmount > 0 && currentBet + raiseAmount <= 3) {
-          return { action: 'raise', amount: raiseAmount };
-        }
-      }
-      return callAmount <= player.chips ? { action: 'call' } : { action: 'fold' };
+      // Weak: 80% check, 20% fold
+      return roll < 0.8 ? { action: 'check' } : { action: 'fold' };
     }
-  } else if (score >= 40) {
-    // Medium hand: check/call
-    if (currentBet === 0) {
-      if (Math.random() < 0.2) {
-        const betAmt = Math.min(1, player.chips);
-        return betAmt > 0 ? { action: 'bet', amount: betAmt } : { action: 'check' };
-      }
-      return { action: 'check' };
-    }
-    return callAmount <= player.chips ? { action: 'call' } : { action: 'fold' };
   } else {
-    // Weak hand
-    if (currentBet === 0) {
-      return { action: 'check' };
+    // Facing a bet
+    if (score >= 70) {
+      // Strong: 40% raise, 60% call
+      if (roll < 0.4 && player.chips > callAmount) {
+        const raiseAmount = Math.min(cpuBetAmount(score, player.chips - callAmount, 0), player.chips - callAmount);
+        return raiseAmount > 0 ? { action: 'raise', amount: raiseAmount } : { action: 'call' };
+      }
+      return { action: 'call' };
+    } else if (score >= 40) {
+      // Medium: 70% call, 30% fold
+      return roll < 0.7 ? { action: 'call' } : { action: 'fold' };
+    } else {
+      // Weak: 40% call, 60% fold
+      return roll < 0.4 ? { action: 'call' } : { action: 'fold' };
     }
-    return Math.random() < 0.25 ? { action: 'call' } : { action: 'fold' };
   }
 }
 
@@ -1203,34 +1227,37 @@ function applyAction(player, decision) {
       break;
     case 'call': {
       const callAmount = Math.min(state.currentBet - player.bet, player.chips);
+      const isAllin = callAmount >= player.chips;
       player.chips -= callAmount;
       player.bet += callAmount;
       state.pot += callAmount;
-      addLog(`${player.name} → コール (${callAmount}枚)`);
+      addLog(`${player.name} → ${isAllin ? 'オールイン' : 'コール'} (${callAmount}枚)`);
       break;
     }
     case 'bet': {
       const amount = Math.min(decision.amount, player.chips);
+      const isAllin = amount >= player.chips;
       player.chips -= amount;
       player.bet += amount;
       state.pot += amount;
       state.currentBet = player.bet;
       state.lastRaiserIndex = player.id;
       state.actedThisRound = new Set([player.id]);
-      addLog(`${player.name} → ベット ${amount}枚`);
+      addLog(`${player.name} → ${isAllin ? 'オールイン' : 'ベット'} ${amount}枚`);
       break;
     }
     case 'raise': {
-      const callAmount = state.currentBet - player.bet;
-      const raiseAmount = decision.amount;
-      const totalCost = Math.min(callAmount + raiseAmount, player.chips);
+      const callAmount = Math.min(state.currentBet - player.bet, player.chips);
+      const raiseAmount = Math.min(decision.amount, player.chips - callAmount);
+      const totalCost = callAmount + raiseAmount;
+      const isAllin = totalCost >= player.chips;
       player.chips -= totalCost;
       player.bet += totalCost;
       state.pot += totalCost;
       state.currentBet = player.bet;
       state.lastRaiserIndex = player.id;
       state.actedThisRound = new Set([player.id]);
-      addLog(`${player.name} → レイズ ${raiseAmount}枚 (計${player.bet}枚)`);
+      addLog(`${player.name} → ${isAllin ? 'オールイン' : 'レイズ'} ${raiseAmount}枚 (計${player.bet}枚)`);
       break;
     }
   }
@@ -1249,14 +1276,14 @@ function waitForHumanAction(player) {
 
 function enableActions(player) {
   const canCheck = state.currentBet === 0 || player.bet >= state.currentBet;
-  const callAmount = state.currentBet - player.bet;
-  const canCall = !canCheck && callAmount <= player.chips && callAmount > 0;
+  const callAmount = Math.min(state.currentBet - player.bet, player.chips);
+  const canCall = !canCheck && callAmount > 0;
   const canBet = state.currentBet === 0 && player.chips > 0;
-  const canRaise = state.currentBet > 0 && player.chips > callAmount && state.currentBet < 3;
+  const canRaise = state.currentBet > 0 && player.chips > callAmount;
+  const canAllin = player.chips > 0;
 
   document.getElementById('btn-fold').disabled = false;
   document.getElementById('btn-check').disabled = !canCheck;
-  document.getElementById('btn-check').textContent = canCheck ? 'チェック' : 'チェック';
 
   if (canBet || canRaise) {
     document.getElementById('btn-bet').style.display = '';
@@ -1269,9 +1296,18 @@ function enableActions(player) {
   if (canCall) {
     document.getElementById('btn-call').style.display = '';
     document.getElementById('btn-call').disabled = false;
-    document.getElementById('btn-call').textContent = `コール (${callAmount})`;
+    document.getElementById('btn-call').textContent = callAmount >= player.chips ? `オールイン (${callAmount})` : `コール (${callAmount})`;
   } else {
     document.getElementById('btn-call').style.display = 'none';
+  }
+
+  // All-in button: show when player has chips and can bet/raise
+  if (canAllin && player.chips > 1) {
+    document.getElementById('btn-allin').style.display = '';
+    document.getElementById('btn-allin').disabled = false;
+    document.getElementById('btn-allin').textContent = `オールイン (${player.chips})`;
+  } else {
+    document.getElementById('btn-allin').style.display = 'none';
   }
 }
 
@@ -1280,8 +1316,10 @@ function disableActions() {
   document.getElementById('btn-check').disabled = true;
   document.getElementById('btn-bet').disabled = true;
   document.getElementById('btn-call').disabled = true;
+  document.getElementById('btn-allin').disabled = true;
   document.getElementById('btn-bet').style.display = '';
   document.getElementById('btn-call').style.display = 'none';
+  document.getElementById('btn-allin').style.display = 'none';
   document.getElementById('bet-controls').style.display = 'none';
 }
 
@@ -1659,13 +1697,15 @@ document.getElementById('btn-bet').addEventListener('click', () => {
   // Show bet controls
   const player = state.players[0];
   const isBet = state.currentBet === 0;
-  const maxBet = isBet ? Math.min(3, player.chips) : Math.min(3 - state.currentBet, player.chips - (state.currentBet - player.bet));
+  const callCost = isBet ? 0 : (state.currentBet - player.bet);
+  const maxBet = Math.max(1, player.chips - callCost);
 
   document.getElementById('bet-controls').style.display = 'flex';
   document.getElementById('btn-fold').style.display = 'none';
   document.getElementById('btn-check').style.display = 'none';
   document.getElementById('btn-bet').style.display = 'none';
   document.getElementById('btn-call').style.display = 'none';
+  document.getElementById('btn-allin').style.display = 'none';
   document.getElementById('bet-amount').value = 1;
   document.getElementById('bet-amount').max = maxBet;
 });
@@ -1707,6 +1747,25 @@ document.getElementById('btn-bet-cancel').addEventListener('click', () => {
   document.getElementById('btn-bet').style.display = '';
   // Re-enable actions
   if (humanResolve) enableActions(state.players[0]);
+});
+
+document.getElementById('btn-allin').addEventListener('click', () => {
+  if (!humanResolve) return;
+  disableActions();
+  const player = state.players[0];
+  const resolve = humanResolve;
+  humanResolve = null;
+  if (state.currentBet === 0) {
+    resolve({ action: 'bet', amount: player.chips });
+  } else {
+    const callCost = state.currentBet - player.bet;
+    const raiseAmount = player.chips - callCost;
+    if (raiseAmount > 0) {
+      resolve({ action: 'raise', amount: raiseAmount });
+    } else {
+      resolve({ action: 'call' });
+    }
+  }
 });
 
 document.getElementById('btn-next-round').addEventListener('click', nextRound);
