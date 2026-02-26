@@ -1380,6 +1380,7 @@ html, body {
     <div id="tutorial-footer">
       <button class="tut-nav-btn" id="tut-prev">前へ</button>
       <button class="tut-nav-btn primary" id="tut-next">次へ →</button>
+      <button class="tut-nav-btn primary" id="tut-finish" style="display:none">🏠 タイトルへ戻る</button>
     </div>
   </div>
 </div>
@@ -2686,6 +2687,7 @@ document.getElementById('btn-next-set').addEventListener('click', startNextSet);
   const backBtn   = document.getElementById('tutorial-back');
   const prevBtn   = document.getElementById('tut-prev');
   const nextBtn   = document.getElementById('tut-next');
+  const finishBtn = document.getElementById('tut-finish');
   const pageNum   = document.getElementById('tutorial-page-num');
   const progBar   = document.getElementById('tutorial-progress-bar');
   const steps     = document.querySelectorAll('.tutorial-step');
@@ -2754,14 +2756,13 @@ document.getElementById('btn-next-set').addEventListener('click', startNextSet);
     }
 
     if (currentStep === TOTAL_STEPS - 1) {
-      prevBtn.textContent = '🏠 タイトルへ戻る';
-      prevBtn.style.visibility = 'visible';
       nextBtn.style.display = 'none';
+      finishBtn.style.display = '';
     } else {
-      prevBtn.textContent = '前へ';
       nextBtn.style.display = '';
       nextBtn.textContent = '次へ →';
       nextBtn.classList.add('primary');
+      finishBtn.style.display = 'none';
     }
   }
 
@@ -2788,9 +2789,7 @@ document.getElementById('btn-next-set').addEventListener('click', startNextSet);
   });
 
   prevBtn.addEventListener('click', () => {
-    if (currentStep === TOTAL_STEPS - 1) {
-      closeTutorial();
-    } else if (currentStep > 0) {
+    if (currentStep > 0) {
       currentStep--;
       updateUI();
     }
@@ -2801,6 +2800,10 @@ document.getElementById('btn-next-set').addEventListener('click', startNextSet);
       currentStep++;
       updateUI();
     }
+  });
+
+  finishBtn.addEventListener('click', () => {
+    closeTutorial();
   });
 })();
 
