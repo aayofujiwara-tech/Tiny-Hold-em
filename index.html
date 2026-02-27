@@ -1305,7 +1305,7 @@ html, body {
         <tr><td>ハイカード</td><td>役なし</td><td>34.29%</td></tr>
       </table>
       <p style="font-size:0.7rem; color:var(--text-dim); margin-top:6px; text-align:center;">
-        同役時: 数字が大きい方が勝ち。同数字なら 🪙青 &gt; 💀赤 &gt; ⚓黒
+        同役時: 数字が大きい方が勝ち。同役同数字なら引き分け（チョップ）
       </p>
       <p style="font-size:0.65rem; color:var(--text-dim); margin-top:8px; text-align:center; line-height:1.4; border-top:1px solid rgba(255,255,255,0.08); padding-top:6px;">
         ⚔️ クイックマッチ：チップ0で即終了<br>
@@ -1516,9 +1516,9 @@ html, body {
 
 // ===== Constants =====
 const SUITS = [
-  { id: 'red',   emoji: '💀', label: '赤', suitRank: 1 },
-  { id: 'black', emoji: '⚓', label: '黒', suitRank: 0 },
-  { id: 'blue',  emoji: '🪙', label: '青', suitRank: 2 },
+  { id: 'red',   emoji: '💀', label: '赤' },
+  { id: 'black', emoji: '⚓', label: '黒' },
+  { id: 'blue',  emoji: '🪙', label: '青' },
 ];
 
 const RANKS = [
@@ -1609,7 +1609,7 @@ function createDeck() {
   const deck = [];
   for (const suit of SUITS) {
     for (const rank of RANKS) {
-      deck.push({ rank: rank.value, display: rank.display, suit: suit.id, emoji: suit.emoji, suitRank: suit.suitRank });
+      deck.push({ rank: rank.value, display: rank.display, suit: suit.id, emoji: suit.emoji });
     }
   }
   return deck;
@@ -1653,9 +1653,8 @@ function compareHands(p1, p2, community) {
   const min2 = Math.min(p2.hand.rank, community.rank);
   if (min1 !== min2) return min1 > min2 ? 1 : -1;
 
-  const sr1 = Math.max(p1.hand.suitRank, community.suitRank);
-  const sr2 = Math.max(p2.hand.suitRank, community.suitRank);
-  return sr1 > sr2 ? 1 : sr1 < sr2 ? -1 : 0;
+  // 同役・同数字 → チョップ（スート比較廃止）
+  return 0;
 }
 
 // ===== CPU AI (GTO-based) =====
@@ -2152,6 +2151,14 @@ async function goToShowdown() {
   }
 
   // Compare hands — check for chop (draw)
+  // Debug: log each player's hand evaluation
+  for (const p of remaining) {
+    const h = classifyHand(p.hand, state.communityCard);
+    const suitInfo = SUITS.find(s => s.id === p.hand.suit);
+    const commSuit = SUITS.find(s => s.id === state.communityCard.suit);
+    console.log(`[Showdown] ${p.name}: ${suitInfo.emoji}${p.hand.display} + comm ${commSuit.emoji}${state.communityCard.display} → ${h.name} (rank=${h.rank})`);
+  }
+
   remaining.sort((a, b) => -compareHands(a, b, state.communityCard));
 
   // Check if top players are tied (chop)
@@ -2161,10 +2168,13 @@ async function goToShowdown() {
   // Count how many players tie with the winner
   const chopPlayers = [winner];
   for (let i = 1; i < remaining.length; i++) {
-    if (compareHands(winner, remaining[i], state.communityCard) === 0) {
+    const cmpResult = compareHands(winner, remaining[i], state.communityCard);
+    console.log(`[Showdown] compare ${winner.name} vs ${remaining[i].name}: ${cmpResult}`);
+    if (cmpResult === 0) {
       chopPlayers.push(remaining[i]);
     }
   }
+  console.log(`[Showdown] chopPlayers=${chopPlayers.length}, isChop=${chopPlayers.length > 1}`);
 
   if (chopPlayers.length > 1) {
     // Chop: split pot

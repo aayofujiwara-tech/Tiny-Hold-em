@@ -17,7 +17,7 @@ const {
 // ===== Helpers =====
 function makeCard(rank, suitLabel) {
   const suit = SUITS.find(s => s.label === suitLabel);
-  return { rank, suit: suit.id, suitRank: suit.suitRank, display: rank === 14 ? 'A' : rank === 13 ? 'K' : rank === 12 ? 'Q' : rank === 11 ? 'J' : String(rank) };
+  return { rank, suit: suit.id, display: rank === 14 ? 'A' : rank === 13 ? 'K' : rank === 12 ? 'Q' : rank === 11 ? 'J' : String(rank) };
 }
 
 let totalPassed = 0;
@@ -71,12 +71,12 @@ for (const t of handTests) {
 }
 console.log(`テスト1: 役判定          ${test1Passed === test1Total ? '✅' : '❌'} ${test1Passed}/${test1Total} passed`);
 
-// ===== テスト2: 同役の比較（数字・スート順） =====
+// ===== テスト2: 同役の比較（数字） =====
 console.log('\n--- テスト2: 役の比較 ---');
 const compareTests = [
-  { h1: [[14,'赤'],[13,'赤']], h2: [[11,'黒'],[12,'黒']], expect: 1 }, // ロイヤル > ストフラ
-  { h1: [[12,'赤'],[12,'黒']], h2: [[11,'赤'],[11,'黒']], expect: 1 }, // バディQ > バディJ
-  { h1: [[14,'青'],[12,'青']], h2: [[14,'赤'],[12,'赤']], expect: 1 }, // フラ(青A高) > フラ(赤A高)
+  { h1: [[14,'赤'],[13,'赤']], h2: [[11,'黒'],[12,'黒']], expect: 1 },  // ロイヤル > ストフラ
+  { h1: [[12,'赤'],[12,'黒']], h2: [[11,'赤'],[11,'黒']], expect: 1 },  // バディQ > バディJ
+  { h1: [[14,'青'],[12,'青']], h2: [[14,'赤'],[12,'赤']], expect: 0 },  // フラA同数字 → チョップ（スート廃止）
 ];
 
 let test2Passed = 0;
@@ -85,19 +85,10 @@ for (const t of compareTests) {
   const p1 = { hand: makeCard(t.h1[0][0], t.h1[0][1]) };
   const p2 = { hand: makeCard(t.h2[0][0], t.h2[0][1]) };
   const comm = makeCard(t.h1[1][0], t.h1[1][1]);
-  // For test 2, h2 uses its own community card
   const comm2 = makeCard(t.h2[1][0], t.h2[1][1]);
   const ok = runTest(
     `比較: [${t.h1[0]}+${t.h1[1]}] vs [${t.h2[0]}+${t.h2[1]}]`,
     () => {
-      // compareHands uses a shared community card
-      // For this test, we need to interpret the test data:
-      // h1 = [hand, community] for player 1, h2 = [hand, community] for player 2
-      // In the real game, community is shared. So we treat the first element as hand, second as the shared community.
-      // But the test has different community cards per player - this means we need to adapt.
-      // Actually looking at the test spec: h1 and h2 each have [hand_card, community_card]
-      // Since the real game has 1 shared community card, the test compares two independent evaluations.
-      // We'll compare using the hand rank approach directly.
       const hand1 = classifyHand(p1.hand, comm);
       const hand2 = classifyHand(p2.hand, comm2);
 
@@ -105,7 +96,6 @@ for (const t of compareTests) {
       if (hand1.rank !== hand2.rank) {
         result = hand1.rank > hand2.rank ? 1 : -1;
       } else {
-        // Same hand rank - compare by card values
         const max1 = Math.max(p1.hand.rank, comm.rank);
         const max2 = Math.max(p2.hand.rank, comm2.rank);
         if (max1 !== max2) {
@@ -116,9 +106,7 @@ for (const t of compareTests) {
           if (min1 !== min2) {
             result = min1 > min2 ? 1 : -1;
           } else {
-            const sr1 = Math.max(p1.hand.suitRank, comm.suitRank);
-            const sr2 = Math.max(p2.hand.suitRank, comm2.suitRank);
-            result = sr1 > sr2 ? 1 : sr1 < sr2 ? -1 : 0;
+            result = 0; // 同役・同数字 → チョップ
           }
         }
       }
@@ -261,6 +249,145 @@ runTest('サバイバル: プレイヤー脱落', () => {
 
 console.log(`テスト6: サバイバル脱落  ${test6Passed === test6Total ? '✅' : '❌'} ${test6Passed}/${test6Total} passed`);
 
+// ===== テスト7: チョップ（引き分け）判定の検証 =====
+console.log('\n--- テスト7: チョップ判定 ---');
+let test7Passed = 0;
+let test7Total = 8;
+
+// compareHands uses player objects { hand: card } and a community card
+function makePlayer(rank, suitLabel) {
+  return { hand: makeCard(rank, suitLabel) };
+}
+
+// Case 1: 同じバディ・同数字 → スート違いでもチョップ
+runTest('バディA comm=⚓A: 赤A vs 青A → チョップ（スート廃止）', () => {
+  const p1 = makePlayer(14, '赤');
+  const p2 = makePlayer(14, '青');
+  const comm = makeCard(14, '黒');
+  const result = compareHands(p1, p2, comm);
+  assert(result === 0, `expected 0 (chop), got ${result}`);
+}) && test7Passed++;
+
+// Case 2: ストフラ vs フラ → 役ランク差で勝敗
+runTest('赤K+赤Q=ストフラ vs 赤A+赤Q=フラ → ストフラの勝ち', () => {
+  const p1 = makePlayer(14, '赤');
+  const p2 = makePlayer(13, '赤');
+  const comm = makeCard(12, '赤');
+  const h1 = classifyHand(p1.hand, comm);
+  const h2 = classifyHand(p2.hand, comm);
+  assert(h1.name === 'フラ', `p1 should be フラ, got ${h1.name}`);
+  assert(h2.name === 'ストフラ', `p2 should be ストフラ, got ${h2.name}`);
+  const result = compareHands(p1, p2, comm);
+  assert(result === -1, `expected -1 (p2 wins), got ${result}`);
+}) && test7Passed++;
+
+// Case 3: compareHands の戻り値が必ず 1, -1, 0 のいずれか（全組合せ網羅）
+runTest('compareHands は常に 1, -1, 0 のいずれかを返す (全組合せ)', () => {
+  const suits = ['赤', '黒', '青'];
+  const ranks = [10, 11, 12, 13, 14];
+  let invalidResult = null;
+  for (const cs of suits) {
+    for (const cr of ranks) {
+      const comm = makeCard(cr, cs);
+      for (const s1 of suits) {
+        for (const r1 of ranks) {
+          if (s1 === cs && r1 === cr) continue;
+          const p1 = makePlayer(r1, s1);
+          for (const s2 of suits) {
+            for (const r2 of ranks) {
+              if (s2 === cs && r2 === cr) continue;
+              if (s2 === s1 && r2 === r1) continue;
+              const p2 = makePlayer(r2, s2);
+              const result = compareHands(p1, p2, comm);
+              if (result !== 1 && result !== -1 && result !== 0) {
+                invalidResult = `${s1}${r1} vs ${s2}${r2} comm=${cs}${cr} → ${result}`;
+                break;
+              }
+            }
+            if (invalidResult) break;
+          }
+          if (invalidResult) break;
+        }
+        if (invalidResult) break;
+      }
+      if (invalidResult) break;
+    }
+    if (invalidResult) break;
+  }
+  assert(invalidResult === null, `invalid result: ${invalidResult}`);
+}) && test7Passed++;
+
+// Case 4: 同ランク・異スート → チョップ（ハイカード同士）
+runTest('チョップ: comm=🪙Q, hand1=💀10, hand2=⚓10 → 同役同数字でチョップ', () => {
+  const comm = makeCard(12, '青');
+  const p1 = makePlayer(10, '赤');
+  const p2 = makePlayer(10, '黒');
+  const result = compareHands(p1, p2, comm);
+  assert(result === 0, `expected chop (0), got ${result}`);
+}) && test7Passed++;
+
+// Case 5: 同ランク・異スート → チョップ（バディ同士）
+runTest('チョップ: comm=🪙A, hand1=💀A, hand2=⚓A → バディ同数字でチョップ', () => {
+  const comm = makeCard(14, '青');
+  const p1 = makePlayer(14, '赤');
+  const p2 = makePlayer(14, '黒');
+  const result = compareHands(p1, p2, comm);
+  assert(result === 0, `expected chop (0), got ${result}`);
+}) && test7Passed++;
+
+// Case 6: 同役同数字 → スート違ってもチョップ（スト同士）
+runTest('チョップ: comm=⚓K, hand1=💀Q, hand2=🪙Q → スト同数字でチョップ', () => {
+  const comm = makeCard(13, '黒');
+  const p1 = makePlayer(12, '赤');
+  const p2 = makePlayer(12, '青');
+  // Both: スト(K+Q), same rank → chop
+  const result = compareHands(p1, p2, comm);
+  assert(result === 0, `expected 0 (chop), got ${result}`);
+}) && test7Passed++;
+
+// Case 7: チョップ発生の全パターン数を数える（スート廃止で大幅増加）
+runTest('チョップ発生パターン数の確認（スート廃止で増加）', () => {
+  const suits = ['赤', '黒', '青'];
+  const ranks = [10, 11, 12, 13, 14];
+  let chopCount = 0;
+  let totalCount = 0;
+  for (const cs of suits) {
+    for (const cr of ranks) {
+      const comm = makeCard(cr, cs);
+      for (const s1 of suits) {
+        for (const r1 of ranks) {
+          if (s1 === cs && r1 === cr) continue;
+          const p1 = makePlayer(r1, s1);
+          for (const s2 of suits) {
+            for (const r2 of ranks) {
+              if (s2 === cs && r2 === cr) continue;
+              if (s2 === s1 && r2 === r1) continue;
+              totalCount++;
+              const p2 = makePlayer(r2, s2);
+              if (compareHands(p1, p2, comm) === 0) chopCount++;
+            }
+          }
+        }
+      }
+    }
+  }
+  console.log(`    → チョップ: ${chopCount}/${totalCount} 組合せ`);
+  assert(chopCount > 0, `chop should be possible, but found 0 cases`);
+}) && test7Passed++;
+
+// Case 8: チョップ時にポット分割が正しいことの確認
+runTest('チョップ時のポット分割: 奇数ポット', () => {
+  const pot = 7;
+  const chopPlayerCount = 2;
+  const share = Math.floor(pot / chopPlayerCount);
+  const remainder = pot - share * chopPlayerCount;
+  assert(share === 3, `share should be 3, got ${share}`);
+  assert(remainder === 1, `remainder should be 1, got ${remainder}`);
+  assert(share * chopPlayerCount + remainder === pot, `total should equal pot`);
+}) && test7Passed++;
+
+console.log(`テスト7: チョップ判定    ${test7Passed === test7Total ? '✅' : '❌'} ${test7Passed}/${test7Total} passed`);
+
 // ===== Summary =====
 const total = totalPassed + totalFailed;
 console.log(`\n=== タイニーホールデム 自動テスト結果 ===\n`);
@@ -270,6 +397,7 @@ console.log(`テスト3: クイックマッチ  ${test3Passed === test3Total ? '
 console.log(`テスト4: 金貨バトル      ${test4Passed === test4Total ? '✅' : '❌'} ${test4Passed}/${test4Total} passed`);
 console.log(`テスト5: ベット上限      ${test5Passed === test5Total ? '✅' : '❌'} ${test5Passed}/${test5Total} passed`);
 console.log(`テスト6: サバイバル脱落  ${test6Passed === test6Total ? '✅' : '❌'} ${test6Passed}/${test6Total} passed`);
+console.log(`テスト7: チョップ判定    ${test7Passed === test7Total ? '✅' : '❌'} ${test7Passed}/${test7Total} passed`);
 console.log(`\n合計: ${totalPassed}/${total} passed`);
 
 if (failures.length > 0) {

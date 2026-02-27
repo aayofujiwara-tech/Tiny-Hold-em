@@ -4,9 +4,9 @@
 
 // ===== Constants =====
 const SUITS = [
-  { id: 'red',   emoji: '💀', label: '赤', suitRank: 1 },
-  { id: 'black', emoji: '⚓', label: '黒', suitRank: 0 },
-  { id: 'blue',  emoji: '🪙', label: '青', suitRank: 2 },
+  { id: 'red',   emoji: '💀', label: '赤' },
+  { id: 'black', emoji: '⚓', label: '黒' },
+  { id: 'blue',  emoji: '🪙', label: '青' },
 ];
 
 const RANKS = [
@@ -67,9 +67,8 @@ function compareHands(p1, p2, community) {
   const min2 = Math.min(p2.hand.rank, community.rank);
   if (min1 !== min2) return min1 > min2 ? 1 : -1;
 
-  const sr1 = Math.max(p1.hand.suitRank, community.suitRank);
-  const sr2 = Math.max(p2.hand.suitRank, community.suitRank);
-  return sr1 > sr2 ? 1 : sr1 < sr2 ? -1 : 0;
+  // 同役・同数字 → チョップ（スート比較廃止）
+  return 0;
 }
 
 // ===== Game State Creation =====
