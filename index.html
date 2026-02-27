@@ -1946,13 +1946,15 @@ async function runBettingRound() {
 
     if (player.eliminated || player.folded || player.chips <= 0) {
       currentIdx = getNextActiveIndex(currentIdx);
-      if (currentIdx === state.lastRaiserIndex || activePlayers().length <= 1) break;
+      if (currentIdx === -1 || currentIdx === state.lastRaiserIndex || activePlayers().length <= 1) break;
       continue;
     }
 
     // Check if betting round is complete
     if (state.actedThisRound.has(currentIdx) && currentIdx === state.lastRaiserIndex) break;
     if (state.actedThisRound.has(currentIdx) && state.lastRaiserIndex === -1) break;
+    // All active players have acted and matched the bet (or are all-in)
+    if (state.actedThisRound.has(currentIdx) && isBettingComplete()) break;
 
     state.activePlayerIndex = currentIdx;
     renderAll();
@@ -1968,6 +1970,9 @@ async function runBettingRound() {
     applyAction(player, decision);
 
     if (activePlayers().length <= 1) break;
+
+    // Check if betting is fully resolved after this action
+    if (isBettingComplete()) break;
 
     const nextIdx = getNextActiveIndex(currentIdx);
     if (nextIdx === -1) break;
@@ -1985,6 +1990,14 @@ async function runBettingRound() {
 
   // Betting done — proceed to showdown
   await goToShowdown();
+}
+
+// Check if all active players have acted and matched the current bet (or are all-in)
+function isBettingComplete() {
+  const active = state.players.filter(p => !p.eliminated && !p.folded);
+  return active.every(p =>
+    state.actedThisRound.has(p.id) && (p.bet >= state.currentBet || p.chips === 0)
+  );
 }
 
 function applyAction(player, decision) {
