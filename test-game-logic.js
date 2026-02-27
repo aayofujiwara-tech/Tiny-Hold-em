@@ -318,7 +318,7 @@ runTest('compareHands は常に 1, -1, 0 のいずれかを返す (全組合せ)
 }) && test7Passed++;
 
 // Case 4: 同ランク・異スート → チョップ（ハイカード同士）
-runTest('チョップ: comm=🪙Q, hand1=💀10, hand2=⚓10 → 同役同数字でチョップ', () => {
+runTest('チョップ: comm=💎Q, hand1=💀10, hand2=⚓10 → 同役同数字でチョップ', () => {
   const comm = makeCard(12, '青');
   const p1 = makePlayer(10, '赤');
   const p2 = makePlayer(10, '黒');
@@ -327,7 +327,7 @@ runTest('チョップ: comm=🪙Q, hand1=💀10, hand2=⚓10 → 同役同数字
 }) && test7Passed++;
 
 // Case 5: 同ランク・異スート → チョップ（バディ同士）
-runTest('チョップ: comm=🪙A, hand1=💀A, hand2=⚓A → バディ同数字でチョップ', () => {
+runTest('チョップ: comm=💎A, hand1=💀A, hand2=⚓A → バディ同数字でチョップ', () => {
   const comm = makeCard(14, '青');
   const p1 = makePlayer(14, '赤');
   const p2 = makePlayer(14, '黒');
@@ -336,7 +336,7 @@ runTest('チョップ: comm=🪙A, hand1=💀A, hand2=⚓A → バディ同数�
 }) && test7Passed++;
 
 // Case 6: 同役同数字 → スート違ってもチョップ（スト同士）
-runTest('チョップ: comm=⚓K, hand1=💀Q, hand2=🪙Q → スト同数字でチョップ', () => {
+runTest('チョップ: comm=⚓K, hand1=💀Q, hand2=💎Q → スト同数字でチョップ', () => {
   const comm = makeCard(13, '黒');
   const p1 = makePlayer(12, '赤');
   const p2 = makePlayer(12, '青');

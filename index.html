@@ -1309,8 +1309,8 @@ html, body {
       </p>
       <p style="font-size:0.65rem; color:var(--text-dim); margin-top:8px; text-align:center; line-height:1.4; border-top:1px solid rgba(255,255,255,0.08); padding-top:6px;">
         ⚔️ クイックマッチ：チップ0で即終了<br>
-        🪙 金貨バトル（2人）：2セット先取で勝利<br>
-        🪙 金貨バトル（3人以上）：チップ0で脱落
+        👑 金貨バトル（2人）：2セット先取で勝利<br>
+        👑 金貨バトル（3人以上）：チップ0で脱落
       </p>
       <button id="guide-close">閉じる</button>
     </div>
@@ -1381,7 +1381,7 @@ html, body {
             <span class="mode-card-desc">1回勝負・チップ奪い合い</span>
           </button>
           <button class="mode-card" data-mode="coin">
-            <span class="mode-card-icon">🪙</span>
+            <span class="mode-card-icon">👑</span>
             <span class="mode-card-title">金貨バトル</span>
             <span class="mode-card-desc">2セット先取で勝利</span>
           </button>
@@ -1435,7 +1435,7 @@ html, body {
         <p>カードは全部で<span class="tut-highlight">15枚</span></p>
         <p>マーク（スート）は3種類：</p>
         <div class="tut-cards-row" id="tut-suit-cards"></div>
-        <p>💀 骸骨（赤）  ⚓ 錨（黒）  🪙 金貨（青）</p>
+        <p>💀 骸骨（赤）  ⚓ 錨（黒）  💎 宝石（青）</p>
         <p>数字は<span class="tut-highlight">A &gt; K &gt; Q &gt; J &gt; 10</span>の5種類<br>各マーク5枚 × 3マーク = 15枚</p>
       </div>
 
@@ -1481,7 +1481,7 @@ html, body {
           <p><span class="tut-mode-title">⚔️ クイックマッチ（1vs1）</span><br>チップを全部奪ったら勝ち！<br>1回勝負のシンプルなゲーム。</p>
         </div>
         <div class="tut-mode-block">
-          <p><span class="tut-mode-title">🪙 金貨バトル（1vs1）</span><br>先に2セット勝った方が勝利！<br>チップを全部奪うとセット獲得。<br>最長3セットの熱い戦い！</p>
+          <p><span class="tut-mode-title">👑 金貨バトル（1vs1）</span><br>先に2セット勝った方が勝利！<br>チップを全部奪うとセット獲得。<br>最長3セットの熱い戦い！</p>
         </div>
         <div class="tut-mode-block">
           <p><span class="tut-mode-title">👥 みんなで（3〜5人）</span><br>チップがなくなったら脱落。<br>最後の1人が勝者！</p>
@@ -1518,7 +1518,7 @@ html, body {
 const SUITS = [
   { id: 'red',   emoji: '💀', label: '赤' },
   { id: 'black', emoji: '⚓', label: '黒' },
-  { id: 'blue',  emoji: '🪙', label: '青' },
+  { id: 'blue',  emoji: '💎', label: '青' },
 ];
 
 const RANKS = [
@@ -2238,14 +2238,14 @@ function showSetResult(setWinner) {
   const title = document.getElementById('set-result-title');
   const details = document.getElementById('set-result-details');
 
-  title.textContent = `🪙 セット${state.set}終了！`;
+  title.textContent = `👑 セット${state.set}終了！`;
 
   const winnerLabel = setWinner.isHuman ? 'あなたの勝利！ 金貨を獲得しました' : `${setWinner.name} の勝利！ 金貨を奪われた…`;
   const pCoins = state.playerCoins;
   const cCoins = state.cpuCoins;
   const cpu = state.players.find(p => !p.isHuman);
 
-  details.innerHTML = `${winnerLabel}<br><br>金貨: あなた ${'🪙'.repeat(pCoins)}${'○'.repeat(2 - pCoins)}  ${cpu.name} ${'🪙'.repeat(cCoins)}${'○'.repeat(2 - cCoins)}`;
+  details.innerHTML = `${winnerLabel}<br><br>金貨: あなた ${'👑'.repeat(pCoins)}${'○'.repeat(2 - pCoins)}  ${cpu.name} ${'👑'.repeat(cCoins)}${'○'.repeat(2 - cCoins)}`;
 
   overlay.classList.add('visible');
 }
@@ -2326,7 +2326,7 @@ async function showResult(winner, handResult, byFold, isChop = false) {
   let detailText = '';
   if (byFold) {
     detailText = '全員フォールドで勝利';
-    detailText += `<div class="showdown-pot">ポット獲得: 🪙 +${state.pot}</div>`;
+    detailText += `<div class="showdown-pot">ポット獲得: +${state.pot}</div>`;
   } else {
     // Build showdown card display
     const remaining = activePlayers();
@@ -2346,9 +2346,9 @@ async function showResult(winner, handResult, byFold, isChop = false) {
     detailText += '</div>';
     if (isChop) {
       const half = Math.floor(state.pot / remaining.length);
-      detailText += `<div class="showdown-pot">ポットを山分け: 🪙 +${half} ずつ</div>`;
+      detailText += `<div class="showdown-pot">ポットを山分け: +${half} ずつ</div>`;
     } else {
-      detailText += `<div class="showdown-pot">ポット獲得: 🪙 +${state.pot}</div>`;
+      detailText += `<div class="showdown-pot">ポット獲得: +${state.pot}</div>`;
     }
   }
   details.innerHTML = detailText;
@@ -2532,9 +2532,9 @@ function renderHeader() {
     const cC = state.cpuCoins;
     let html = `<span style="font-size:0.75rem; color:var(--text-dim);">セット${state.set}/3</span> `;
     html += `<span style="font-size:0.75rem;">`;
-    html += `${'🪙'.repeat(pC)}${'○'.repeat(2 - pC)}`;
+    html += `${'👑'.repeat(pC)}${'○'.repeat(2 - pC)}`;
     html += ` - `;
-    html += `${'🪙'.repeat(cC)}${'○'.repeat(2 - cC)}`;
+    html += `${'👑'.repeat(cC)}${'○'.repeat(2 - cC)}`;
     html += `</span>`;
     goldDisplay.innerHTML = html;
     goldDisplay.style.display = '';
@@ -2566,7 +2566,7 @@ function renderCPU() {
 
     html += `<div class="cpu-chips">${p.chips}</div>`;
     if (p.bet > 0 && !p.folded) {
-      html += `<div class="cpu-bet">🪙 ベット中: ${p.bet}</div>`;
+      html += `<div class="cpu-bet">BET: ${p.bet}</div>`;
     }
     html += '</div>';
   }
@@ -2597,7 +2597,7 @@ function renderCommunity() {
     wrap.innerHTML = '';
   }
 
-  potDisplay.innerHTML = state.pot > 0 ? `<span class="pot-label">POT</span><span class="pot-value">🪙 ${state.pot}</span>` : '';
+  potDisplay.innerHTML = state.pot > 0 ? `<span class="pot-label">POT</span><span class="pot-value">${state.pot}</span>` : '';
 
   // Show hand result for human player
   if ((state.phase === PHASES.BET || state.phase === PHASES.SHOWDOWN || state.phase === PHASES.RESULT) && state.players[0].hand && state.communityCard && !state.players[0].folded) {
@@ -2629,7 +2629,7 @@ function renderPlayer() {
   // Bet display
   const betDisplay = document.getElementById('player-bet-display');
   if (human.bet > 0 && !human.folded) {
-    betDisplay.textContent = `🪙 ベット中: ${human.bet}`;
+    betDisplay.textContent = `BET: ${human.bet}`;
   } else {
     betDisplay.textContent = '';
   }

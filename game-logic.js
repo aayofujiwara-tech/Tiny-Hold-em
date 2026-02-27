@@ -6,7 +6,7 @@
 const SUITS = [
   { id: 'red',   emoji: '💀', label: '赤' },
   { id: 'black', emoji: '⚓', label: '黒' },
-  { id: 'blue',  emoji: '🪙', label: '青' },
+  { id: 'blue',  emoji: '💎', label: '青' },
 ];
 
 const RANKS = [
