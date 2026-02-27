@@ -1435,7 +1435,7 @@ html, body {
         <p>カードは全部で<span class="tut-highlight">15枚</span></p>
         <p>マーク（スート）は3種類：</p>
         <div class="tut-cards-row" id="tut-suit-cards"></div>
-        <p>💀 骸骨（赤）  ⚓ 錨（黒）  💎 宝石（青）</p>
+        <p>💀 骸骨（赤）  ⚔️ 剣（黒）  💎 宝石（青）</p>
         <p>数字は<span class="tut-highlight">A &gt; K &gt; Q &gt; J &gt; 10</span>の5種類<br>各マーク5枚 × 3マーク = 15枚</p>
       </div>
 
@@ -1517,7 +1517,7 @@ html, body {
 // ===== Constants =====
 const SUITS = [
   { id: 'red',   emoji: '💀', label: '赤' },
-  { id: 'black', emoji: '⚓', label: '黒' },
+  { id: 'black', emoji: '⚔️', label: '黒' },
   { id: 'blue',  emoji: '💎', label: '青' },
 ];
 
@@ -2965,7 +2965,7 @@ document.getElementById('btn-next-set').addEventListener('click', startNextSet);
     const handsEl = document.getElementById('tut-hands');
     if (handsEl && !handsEl.hasChildNodes()) {
       const red   = SUITS[0]; // 💀 red
-      const black = SUITS[1]; // ⚓ black
+      const black = SUITS[1]; // ⚔️ black
 
       const hands = [
         { rank: '1', name: 'ロイヤル',    cards: [{ s: red, r: 'A' }, { s: red, r: 'K' }] },
