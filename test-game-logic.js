@@ -11,6 +11,7 @@ const {
   processSetEnd,
   calcMaxBet,
   calcCallAmount,
+  calcMinRaise,
   processElimination,
 } = require('./game-logic');
 
@@ -388,6 +389,68 @@ runTest('チョップ時のポット分割: 奇数ポット', () => {
 
 console.log(`テスト7: チョップ判定    ${test7Passed === test7Total ? '✅' : '❌'} ${test7Passed}/${test7Total} passed`);
 
+// ===== テスト8: ミニマムレイズ =====
+console.log('\n--- テスト8: ミニマムレイズ ---');
+let test8Passed = 0;
+let test8Total = 4;
+
+runTest('calcMinRaise: lastBetAmount=5 → 最小レイズ5', () => {
+  const min = calcMinRaise(5);
+  assert(min === 5, `expected 5, got ${min}`);
+}) && test8Passed++;
+
+runTest('calcMinRaise: lastBetAmount=0 → 最小レイズ1', () => {
+  const min = calcMinRaise(0);
+  assert(min === 1, `expected 1, got ${min}`);
+}) && test8Passed++;
+
+runTest('calcMinRaise: lastBetAmount=1 → 最小レイズ1', () => {
+  const min = calcMinRaise(1);
+  assert(min === 1, `expected 1, got ${min}`);
+}) && test8Passed++;
+
+runTest('calcMinRaise: lastBetAmount=3 → 最小レイズ3', () => {
+  const min = calcMinRaise(3);
+  assert(min === 3, `expected 3, got ${min}`);
+}) && test8Passed++;
+
+console.log(`テスト8: ミニマムレイズ  ${test8Passed === test8Total ? '✅' : '❌'} ${test8Passed}/${test8Total} passed`);
+
+// ===== テスト9: ディーラー・アクション順序 =====
+console.log('\n--- テスト9: ディーラー順序 ---');
+let test9Passed = 0;
+let test9Total = 3;
+
+runTest('初期状態: プレイヤー0がディーラー', () => {
+  const st = initGame('quick', 1);
+  assert(st.dealerIndex === 0, `dealerIndex should be 0, got ${st.dealerIndex}`);
+  assert(st.players[0].isDealer === true, `player 0 should be dealer`);
+}) && test9Passed++;
+
+runTest('lastBetAmount: 初期値0', () => {
+  const st = initGame('quick', 1);
+  assert(st.lastBetAmount === 0, `lastBetAmount should be 0, got ${st.lastBetAmount}`);
+}) && test9Passed++;
+
+runTest('1v1: ディーラーの左隣(=非ディーラー)が先手', () => {
+  const st = initGame('quick', 1);
+  // dealerIndex=0, so first better should be player 1
+  // Simulate active players (not eliminated, not folded, chips > 0)
+  const total = st.players.length;
+  let firstBetter = -1;
+  for (let i = 1; i <= total; i++) {
+    const idx = (st.dealerIndex + i) % total;
+    const p = st.players[idx];
+    if (!p.eliminated && !p.folded && p.chips > 0) {
+      firstBetter = idx;
+      break;
+    }
+  }
+  assert(firstBetter === 1, `first better should be 1 (non-dealer), got ${firstBetter}`);
+}) && test9Passed++;
+
+console.log(`テスト9: ディーラー順序  ${test9Passed === test9Total ? '✅' : '❌'} ${test9Passed}/${test9Total} passed`);
+
 // ===== Summary =====
 const total = totalPassed + totalFailed;
 console.log(`\n=== タイニーホールデム 自動テスト結果 ===\n`);
@@ -398,6 +461,8 @@ console.log(`テスト4: 金貨バトル      ${test4Passed === test4Total ? '�
 console.log(`テスト5: ベット上限      ${test5Passed === test5Total ? '✅' : '❌'} ${test5Passed}/${test5Total} passed`);
 console.log(`テスト6: サバイバル脱落  ${test6Passed === test6Total ? '✅' : '❌'} ${test6Passed}/${test6Total} passed`);
 console.log(`テスト7: チョップ判定    ${test7Passed === test7Total ? '✅' : '❌'} ${test7Passed}/${test7Total} passed`);
+console.log(`テスト8: ミニマムレイズ  ${test8Passed === test8Total ? '✅' : '❌'} ${test8Passed}/${test8Total} passed`);
+console.log(`テスト9: ディーラー順序  ${test9Passed === test9Total ? '✅' : '❌'} ${test9Passed}/${test9Total} passed`);
 console.log(`\n合計: ${totalPassed}/${total} passed`);
 
 if (failures.length > 0) {

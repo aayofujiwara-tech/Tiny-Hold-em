@@ -101,6 +101,7 @@ function createInitialState(cpuCount, gameMode) {
     log: [],
     roundNumber: 0,
     lastRaiserIndex: -1,
+    lastBetAmount: 0,
     actedThisRound: new Set(),
     gameMode,
     cpuLevel: 'normal',
@@ -200,6 +201,11 @@ function calcCallAmount(currentBet, playerBet, playerChips) {
   return Math.min(currentBet - playerBet, playerChips);
 }
 
+// calcMinRaise: minimum raise size (must raise by at least the last bet/raise amount)
+function calcMinRaise(lastBetAmount) {
+  return Math.max(1, lastBetAmount);
+}
+
 // processElimination: eliminate players with 0 chips in survival mode
 function processElimination(st) {
   for (const p of st.players) {
@@ -231,6 +237,7 @@ module.exports = {
   processSetEnd,
   calcMaxBet,
   calcCallAmount,
+  calcMinRaise,
   processElimination,
   isCoinMode,
   isQuickMode,
