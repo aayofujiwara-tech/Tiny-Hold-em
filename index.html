@@ -2253,48 +2253,34 @@ function startNextSet() {
 async function showResult(winner, handResult, byFold, isChop = false) {
   state.phase = PHASES.RESULT;
 
-  // Quick match: game over when someone has 0 chips
+  // Determine pending end-of-round state (checked when "next round" is pressed)
+  state.pendingGameEnd = null;
+  state.pendingSetEnd = null;
+
   if (isQuickMode()) {
     const loser = state.players.find(p => p.chips <= 0);
     if (loser) {
-      renderAll();
       const gameWinner = state.players.find(p => p.chips > 0);
-      showGameOver(gameWinner);
-      return;
+      state.pendingGameEnd = { winner: gameWinner };
     }
-  }
-
-  // Coin mode 1v1: check if set ended (someone busted)
-  if (isCoinMode()) {
+  } else if (isCoinMode()) {
     const setWinner = checkSetEnd();
     if (setWinner) {
       awardSetCoin(setWinner);
-      renderAll();
-      // Check if game is over (2 coins = win)
       if (state.playerCoins >= 2 || state.cpuCoins >= 2) {
         const gameWinner = state.playerCoins >= 2 ? state.players[0] : state.players.find(p => !p.isHuman);
-        showGameOver(gameWinner);
-        return;
+        state.pendingGameEnd = { winner: gameWinner };
+      } else {
+        state.pendingSetEnd = { setWinner };
       }
-      // Show set result, then next set
-      showSetResult(setWinner);
-      return;
     }
-  }
-
-  // Check if only one player remains (3+ elimination modes)
-  if (!isQuickMode() && !isCoinMode()) {
+  } else {
+    // 3+ player elimination
     const alive = alivePlayers();
     if (alive.length <= 1) {
-      renderAll();
-      showGameOver(alive[0]);
-      return;
-    }
-    // Human player eliminated in 3+ player mode
-    if (state.players[0].eliminated) {
-      renderAll();
-      showGameOver(null, true);
-      return;
+      state.pendingGameEnd = { winner: alive[0] || null };
+    } else if (state.players[0].eliminated) {
+      state.pendingGameEnd = { winner: null, humanEliminated: true };
     }
   }
 
@@ -2343,6 +2329,16 @@ async function showResult(winner, handResult, byFold, isChop = false) {
     }
   }
   details.innerHTML = detailText;
+
+  // Update button text based on pending state
+  const nextBtn = document.getElementById('btn-next-round');
+  if (state.pendingGameEnd) {
+    nextBtn.textContent = '結果を見る';
+  } else if (state.pendingSetEnd) {
+    nextBtn.textContent = 'セット結果へ';
+  } else {
+    nextBtn.textContent = '次のラウンド';
+  }
 
   overlay.classList.add('visible');
   renderAll();
@@ -2459,6 +2455,22 @@ function showGameOver(winner, humanEliminated) {
 
 function nextRound() {
   document.getElementById('result-overlay').classList.remove('visible');
+
+  // Check pending game end (deferred from showResult so showdown is always shown)
+  if (state.pendingGameEnd) {
+    const info = state.pendingGameEnd;
+    state.pendingGameEnd = null;
+    showGameOver(info.winner, info.humanEliminated);
+    return;
+  }
+
+  // Check pending set end (coin battle)
+  if (state.pendingSetEnd) {
+    const info = state.pendingSetEnd;
+    state.pendingSetEnd = null;
+    showSetResult(info.setWinner);
+    return;
+  }
 
   // Move dealer
   let nextDealer = getNextActiveIndex(state.dealerIndex);
