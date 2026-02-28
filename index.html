@@ -1734,10 +1734,10 @@ function compareHands(p1, p2, community) {
 // ===== CPU AI (GTO-based) =====
 const HAND_SCORES = {
   'ロイヤル':   100,
-  'ストフラ':    85,
-  'バディ':      70,
-  'フラ':        55,
-  'スト':        40,
+  'ストフラ':    90,
+  'フラ':        75,
+  'スト':        65,
+  'バディ':      55,
   'ハイカード':  20,
 };
 
@@ -1747,9 +1747,9 @@ function calcScore(myCard, communityCard) {
 }
 
 function getStrengthTier(score) {
-  if (score >= 70) return 'strong';   // バディ(70), ストフラ(85), ロイヤル(100)
-  if (score >= 55) return 'medium';   // フラ(55)
-  return 'weak';                       // スト(40), ハイカード(20)
+  if (score >= 70) return 'strong';   // フラ(75), ストフラ(90), ロイヤル(100)
+  if (score >= 45) return 'medium';   // バディ(55), スト(65)
+  return 'weak';                       // ハイカード(20)
 }
 
 // Level 1: ひよっこ海賊 (beginner)
@@ -1766,8 +1766,8 @@ const CPU_EASY = {
   },
   weak: {
     noBet:    { bet: 0.1, check: 0.9 },
-    vsBet:    { call: 0.1, raise: 0.0, fold: 0.9 },
-    vsRaise:  { call: 0.1, raise: 0.0, fold: 0.9 },
+    vsBet:    { call: 0.05, raise: 0.0, fold: 0.95 },
+    vsRaise:  { call: 0.0, raise: 0.0, fold: 1.0 },
   },
   betSizing:    { bet: 0.33, raise: 0.50, reraise: 0.60 },
   bluffFreq: 0.05,
@@ -1783,13 +1783,13 @@ const CPU_NORMAL = {
   },
   medium: {
     noBet:    { bet: 0.55, check: 0.45 },
-    vsBet:    { call: 0.60, raise: 0.25, fold: 0.15 },
-    vsRaise:  { call: 0.65, raise: 0.15, fold: 0.20 },
+    vsBet:    { call: 0.45, raise: 0.25, fold: 0.30 },
+    vsRaise:  { call: 0.50, raise: 0.15, fold: 0.35 },
   },
   weak: {
     noBet:    { bet: 0.25, check: 0.75 },
-    vsBet:    { call: 0.35, raise: 0.05, fold: 0.60 },
-    vsRaise:  { call: 0.25, raise: 0.05, fold: 0.70 },
+    vsBet:    { call: 0.10, raise: 0.05, fold: 0.85 },
+    vsRaise:  { call: 0.05, raise: 0.05, fold: 0.90 },
   },
   betSizing:    { bet: 0.50, raise: 0.75, reraise: 0.90 },
   bluffFreq: 0.2,
@@ -1799,22 +1799,22 @@ const CPU_NORMAL = {
 // Level 3: 海賊船長 (hard)
 const CPU_HARD = {
   strong: {
-    noBet:    { bet: 0.90, check: 0.10 },
-    vsBet:    { call: 0.25, raise: 0.75, fold: 0.00 },
-    vsRaise:  { call: 0.35, raise: 0.65, fold: 0.00 },
+    noBet:    { bet: 0.95, check: 0.05 },
+    vsBet:    { call: 0.15, raise: 0.85, fold: 0.00 },
+    vsRaise:  { call: 0.25, raise: 0.75, fold: 0.00 },
   },
   medium: {
-    noBet:    { bet: 0.70, check: 0.30 },
-    vsBet:    { call: 0.50, raise: 0.40, fold: 0.10 },
-    vsRaise:  { call: 0.60, raise: 0.25, fold: 0.15 },
+    noBet:    { bet: 0.80, check: 0.20 },
+    vsBet:    { call: 0.40, raise: 0.50, fold: 0.10 },
+    vsRaise:  { call: 0.45, raise: 0.35, fold: 0.20 },
   },
   weak: {
-    noBet:    { bet: 0.40, check: 0.60 },
-    vsBet:    { call: 0.35, raise: 0.15, fold: 0.50 },
-    vsRaise:  { call: 0.30, raise: 0.10, fold: 0.60 },
+    noBet:    { bet: 0.50, check: 0.50 },
+    vsBet:    { call: 0.05, raise: 0.20, fold: 0.75 },
+    vsRaise:  { call: 0.00, raise: 0.15, fold: 0.85 },
   },
   betSizing:    { bet: 0.75, raise: 1.00, reraise: 1.25 },
-  bluffFreq: 0.35,
+  bluffFreq: 0.45,
   mdfAdherence: 1.0,
 };
 
