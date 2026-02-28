@@ -108,7 +108,8 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
   background:
     radial-gradient(ellipse at center, #143820 0%, var(--table) 60%, #091a10 100%);
   border: 3px solid #1a3a20;
@@ -270,15 +271,18 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex: 1 1 0;
-  gap: 4px;
+  flex: 1;
+  gap: 8px;
+  padding: 6px 0;
   min-height: 0;
+  overflow: hidden;
 }
 
 #community-card-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 #community-card-wrap .card {
@@ -295,6 +299,7 @@ html, body {
   background: rgba(0,0,0,0.4);
   border-radius: 10px;
   padding: 4px 14px;
+  flex-shrink: 0;
 }
 #pot-display .pot-label {
   font-size: 0.9rem;
@@ -326,7 +331,7 @@ html, body {
   text-align: center;
   display: none;
   flex-shrink: 0;
-  padding: 0;
+  padding: 2px 0;
   line-height: 1.3;
 }
 #hand-result.visible { display: block; }
@@ -336,7 +341,7 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
+  gap: 2px;
   padding: 0;
   flex-shrink: 0;
 }
@@ -951,12 +956,18 @@ html, body {
   }
 
   #table-area {
-    align-items: center;
+    gap: 4px;
+    padding: 6px 6px 4px;
   }
 
   #cpu-area {
     gap: 8px;
     padding: 2px 4px;
+  }
+
+  #community-area {
+    gap: 6px;
+    padding: 4px 0;
   }
 
   .cpu-slot .card {
@@ -994,13 +1005,18 @@ html, body {
 
   /* テーブルエリア：縦1カラム・中央揃え */
   #table-area {
-    align-items: center;
     padding: 12px 24px;
-    gap: 8px;
+    gap: 12px;
     max-width: 900px;
     margin-left: auto;
     margin-right: auto;
     width: 100%;
+  }
+
+  /* コミュニティエリア */
+  #community-area {
+    gap: 12px;
+    padding: 8px 0;
   }
 
   /* CPUエリア：横並び・最大幅制限 */
