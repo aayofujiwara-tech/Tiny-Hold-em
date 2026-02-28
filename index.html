@@ -25,26 +25,29 @@
   --text-dim: #887860;
   --danger: #c03030;
 
-  /* 画面高さ連動サイズ */
-  --card-w: clamp(48px, 7.5dvh, 100px);
-  --card-h: clamp(68px, 10.5dvh, 140px);
-  --card-w-lg: clamp(60px, 9dvh, 120px);
-  --card-h-lg: clamp(84px, 12.5dvh, 168px);
-  --card-suit: clamp(1.2rem, 2.4dvh, 2.2rem);
-  --card-rank: clamp(1.0rem, 2dvh, 2.0rem);
-  --card-suit-lg: clamp(1.6rem, 3dvh, 2.8rem);
-  --card-rank-lg: clamp(1.4rem, 2.6dvh, 2.4rem);
+  /* コミュニティ・プレイヤーカード（大きめ） */
+  --card-w: clamp(70px, 11dvh, 140px);
+  --card-h: clamp(98px, 15dvh, 196px);
+  --card-suit: clamp(1.6rem, 3.5dvh, 3.2rem);
+  --card-rank: clamp(1.4rem, 3.0dvh, 2.8rem);
+
+  /* CPUカード（小さめ・複数横並び用） */
+  --cpu-card-w: clamp(44px, 7dvh, 100px);
+  --cpu-card-h: clamp(62px, 10dvh, 140px);
+  --cpu-card-suit: clamp(1.0rem, 2.0dvh, 2.0rem);
+  --cpu-card-rank: clamp(0.9rem, 1.8dvh, 1.8rem);
 
   /* フォント */
   --font-sm: clamp(0.7rem, 1.5dvh, 1rem);
   --font-base: clamp(0.8rem, 1.8dvh, 1.1rem);
-  --font-pot: clamp(1.0rem, 2.5dvh, 2rem);
-  --font-chip: clamp(0.9rem, 2.2dvh, 1.6rem);
+  --font-pot: clamp(1.2rem, 3dvh, 2.4rem);
+  --font-chip: clamp(1.0rem, 2.5dvh, 2.0rem);
+  --font-hand: clamp(1.0rem, 2.5dvh, 1.8rem);
 
-  /* 余白 */
-  --gap-xs: clamp(2px, 0.5dvh, 6px);
-  --gap-sm: clamp(4px, 1dvh, 12px);
-  --gap-md: clamp(6px, 1.5dvh, 16px);
+  /* 余白（詰める） */
+  --gap-xs: clamp(1px, 0.3dvh, 4px);
+  --gap-sm: clamp(2px, 0.8dvh, 10px);
+  --gap-md: clamp(4px, 1.2dvh, 14px);
 }
 
 /* ===== Reset & Base ===== */
@@ -211,8 +214,8 @@ html, body {
 
 /* ===== Card Styles ===== */
 .card {
-  width: var(--card-w);
-  height: var(--card-h);
+  width: var(--cpu-card-w);
+  height: var(--cpu-card-h);
   border-radius: 8px;
   position: relative;
   perspective: 600px;
@@ -247,11 +250,11 @@ html, body {
 .card:not(.face-up) .card-front { display: none; }
 .card:not(.face-up) .card-back { display: flex; }
 
-.card-front .card-suit { font-size: var(--card-suit); }
+.card-front .card-suit { font-size: var(--cpu-card-suit); }
 .card-front .card-rank {
   font-family: 'Crimson Pro', serif;
   font-weight: 700;
-  font-size: var(--card-rank);
+  font-size: var(--cpu-card-rank);
   line-height: 1;
 }
 .card-front.suit-red .card-rank { color: var(--red); }
@@ -282,11 +285,11 @@ html, body {
 
 /* Player card (larger) */
 #player-area .card {
-  width: var(--card-w-lg);
-  height: var(--card-h-lg);
+  width: var(--card-w);
+  height: var(--card-h);
 }
-#player-area .card-front .card-suit { font-size: var(--card-suit-lg); }
-#player-area .card-front .card-rank { font-size: var(--card-rank-lg); }
+#player-area .card-front .card-suit { font-size: var(--card-suit); }
+#player-area .card-front .card-rank { font-size: var(--card-rank); }
 
 /* ===== Community Area ===== */
 #community-area {
@@ -295,7 +298,7 @@ html, body {
   align-items: center;
   justify-content: center;
   flex: 1;
-  gap: var(--gap-sm);
+  gap: var(--gap-xs);
   padding: var(--gap-xs) 0;
   min-height: 0;
   overflow: hidden;
@@ -309,11 +312,11 @@ html, body {
 }
 
 #community-card-wrap .card {
-  width: var(--card-w-lg);
-  height: var(--card-h-lg);
+  width: var(--card-w);
+  height: var(--card-h);
 }
-#community-card-wrap .card-front .card-suit { font-size: var(--card-suit-lg); }
-#community-card-wrap .card-front .card-rank { font-size: var(--card-rank-lg); }
+#community-card-wrap .card-front .card-suit { font-size: var(--card-suit); }
+#community-card-wrap .card-front .card-rank { font-size: var(--card-rank); }
 
 #pot-display {
   display: flex;
@@ -349,7 +352,7 @@ html, body {
 
 #hand-result {
   font-family: 'Pirata One', cursive;
-  font-size: var(--font-base);
+  font-size: var(--font-hand);
   color: var(--gold);
   text-align: center;
   display: none;
