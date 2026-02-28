@@ -48,13 +48,13 @@ html, body {
 }
 
 /* ===== Game Wrapper (auto-scaling) ===== */
-.game-wrapper {
+#game-wrapper {
   width: 390px;
   height: 844px;
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
-  transform-origin: top left;
+  transform-origin: 0 0;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -1201,7 +1201,7 @@ html, body {
 </head>
 <body>
 
-<div class="game-wrapper">
+<div id="game-wrapper">
 <div id="app">
   <!-- Header -->
   <div id="header">
@@ -1459,7 +1459,7 @@ html, body {
     </div>
   </div>
 </div>
-</div><!-- /.game-wrapper -->
+</div><!-- /#game-wrapper -->
 
 <script>
 /* ======================================================
@@ -3053,32 +3053,31 @@ document.getElementById('btn-next-set').addEventListener('click', startNextSet);
 
 // ===== Auto-Scaling =====
 function scaleGame() {
-  const wrapper = document.querySelector('.game-wrapper');
+  const wrapper = document.getElementById('game-wrapper');
   if (!wrapper) return;
 
   const GAME_W = 390;
   const GAME_H = 844;
+  const winW = window.innerWidth;
+  const winH = window.innerHeight;
 
-  const scaleX = window.innerWidth / GAME_W;
-  const scaleY = window.innerHeight / GAME_H;
-  const scale = Math.min(scaleX, scaleY);
+  // 縦横どちらかに合わせたスケール
+  const scale = Math.min(winW / GAME_W, winH / GAME_H);
 
-  // 中央揃えで配置
-  const offsetX = (window.innerWidth - GAME_W * scale) / 2;
-  const offsetY = (window.innerHeight - GAME_H * scale) / 2;
+  // スケール後のゲームサイズ
+  const scaledW = GAME_W * scale;
+  const scaledH = GAME_H * scale;
 
-  wrapper.style.transform = `scale(${scale})`;
-  wrapper.style.transformOrigin = 'top left';
-  wrapper.style.left = `${offsetX}px`;
-  wrapper.style.top = `${offsetY}px`;
-  wrapper.style.position = 'fixed';
+  // 画面中央に配置するためのオフセット
+  const offsetX = (winW - scaledW) / 2;
+  const offsetY = (winH - scaledH) / 2;
+
+  // transform-origin: 0 0 なので translate でオフセットを適用
+  wrapper.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
 }
 
-scaleGame();
+document.addEventListener('DOMContentLoaded', scaleGame);
 window.addEventListener('resize', scaleGame);
-window.addEventListener('orientationchange', () => {
-  setTimeout(scaleGame, 100);
-});
 
 </script>
 </body>
