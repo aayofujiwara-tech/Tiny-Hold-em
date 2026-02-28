@@ -53,9 +53,9 @@ html, body {
   height: 844px;
   position: fixed;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  transform-origin: top center;
+  left: 0;
+  transform-origin: top left;
+  overflow: hidden;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -3055,10 +3055,23 @@ document.getElementById('btn-next-set').addEventListener('click', startNextSet);
 function scaleGame() {
   const wrapper = document.querySelector('.game-wrapper');
   if (!wrapper) return;
-  const scaleX = window.innerWidth / 390;
-  const scaleY = window.innerHeight / 844;
+
+  const GAME_W = 390;
+  const GAME_H = 844;
+
+  const scaleX = window.innerWidth / GAME_W;
+  const scaleY = window.innerHeight / GAME_H;
   const scale = Math.min(scaleX, scaleY);
-  wrapper.style.transform = `translateX(-50%) scale(${scale})`;
+
+  // 中央揃えで配置
+  const offsetX = (window.innerWidth - GAME_W * scale) / 2;
+  const offsetY = (window.innerHeight - GAME_H * scale) / 2;
+
+  wrapper.style.transform = `scale(${scale})`;
+  wrapper.style.transformOrigin = 'top left';
+  wrapper.style.left = `${offsetX}px`;
+  wrapper.style.top = `${offsetY}px`;
+  wrapper.style.position = 'fixed';
 }
 
 scaleGame();
