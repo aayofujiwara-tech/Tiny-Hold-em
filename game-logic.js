@@ -201,9 +201,14 @@ function calcCallAmount(currentBet, playerBet, playerChips) {
   return Math.min(currentBet - playerBet, playerChips);
 }
 
-// calcMinRaise: minimum raise size (must raise by at least the last bet/raise amount)
+// calcMinRaise: minimum raise-by size (上乗せ幅の最小値)
 function calcMinRaise(lastBetAmount) {
   return Math.max(1, lastBetAmount);
+}
+
+// calcMinRaiseTotal: minimum total bet for a raise (トータルの最小レイズ額)
+function calcMinRaiseTotal(currentBet, lastBetAmount) {
+  return currentBet + Math.max(1, lastBetAmount);
 }
 
 // processElimination: eliminate players with 0 chips in survival mode
@@ -238,6 +243,7 @@ module.exports = {
   calcMaxBet,
   calcCallAmount,
   calcMinRaise,
+  calcMinRaiseTotal,
   processElimination,
   isCoinMode,
   isQuickMode,

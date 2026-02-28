@@ -1757,15 +1757,17 @@ function cpuDecide(player, canCheck, currentBet, communityCard) {
     if (roll < probs.call) {
       return { action: 'call' };
     } else if (roll < probs.call + probs.raise) {
-      // Raise — enforce minimum raise
+      // Raise — amount is TOTAL bet target
       const minRaiseSize = Math.max(1, state.lastBetAmount);
-      const chipsAfterCall = player.chips - callAmount;
-      if (chipsAfterCall >= minRaiseSize) {
-        const maxRaise = Math.min(chipsAfterCall, maxTarget - currentBet);
-        let raiseAmount = calcCpuBetAmount(level, state.pot, chipsAfterCall, opponentChips, false, 0);
-        raiseAmount = Math.max(raiseAmount, minRaiseSize); // enforce min raise
-        raiseAmount = Math.min(raiseAmount, maxRaise);
-        return raiseAmount > 0 ? { action: 'raise', amount: raiseAmount } : { action: 'call' };
+      const minRaiseTotal = currentBet + minRaiseSize;
+      const maxTotalBet = Math.min(player.chips + player.bet, maxTarget);
+      if (maxTotalBet >= minRaiseTotal) {
+        // Calculate raise-by amount based on pot sizing, then convert to total
+        const raiseBy = calcCpuBetAmount(level, state.pot, player.chips - callAmount, opponentChips, false, 0);
+        let targetTotal = currentBet + Math.max(raiseBy, minRaiseSize);
+        targetTotal = Math.max(targetTotal, minRaiseTotal);
+        targetTotal = Math.min(targetTotal, maxTotalBet);
+        return targetTotal > currentBet ? { action: 'raise', amount: targetTotal } : { action: 'call' };
       }
       return { action: 'call' };
     } else {
@@ -1992,18 +1994,19 @@ function applyAction(player, decision) {
       break;
     }
     case 'raise': {
-      const callAmount = Math.min(state.currentBet - player.bet, player.chips);
-      const raiseAmount = Math.min(decision.amount, player.chips - callAmount);
-      const totalCost = callAmount + raiseAmount;
-      const isAllin = totalCost >= player.chips;
-      player.chips -= totalCost;
-      player.bet += totalCost;
-      state.pot += totalCost;
-      state.lastBetAmount = raiseAmount;
-      state.currentBet = player.bet;
+      // decision.amount = トータルベット額（自分が場に出す合計）
+      const targetBet = Math.min(decision.amount, player.chips + player.bet);
+      const additionalChips = targetBet - player.bet;
+      const prevBet = state.currentBet;
+      const isAllin = additionalChips >= player.chips;
+      player.chips -= additionalChips;
+      player.bet = targetBet;
+      state.pot += additionalChips;
+      state.lastBetAmount = targetBet - prevBet; // 上乗せ幅を記録
+      state.currentBet = targetBet;
       state.lastRaiserIndex = player.id;
       state.actedThisRound = new Set([player.id]);
-      addLog(`${player.name} → ${isAllin ? 'オールイン' : 'レイズ'} ${raiseAmount}枚 (計${player.bet}枚)`);
+      addLog(`${player.name} → ${isAllin ? 'オールイン' : 'レイズ'} to ${targetBet}枚`);
       break;
     }
   }
@@ -2033,17 +2036,19 @@ function enableActions(player) {
   const callAmount = facingBet ? Math.min(state.currentBet - player.bet, player.chips) : 0;
   const maxTarget = getMaxBetTarget(player);
 
-  // Minimum raise amount (must raise by at least the last bet/raise amount)
+  // Minimum raise: total bet must be at least currentBet + lastBetAmount
   const minRaiseSize = Math.max(1, state.lastBetAmount);
-  const chipsAfterCall = player.chips - callAmount;
+  const minRaiseTotal = state.currentBet + minRaiseSize;
+  const maxTotalBet = Math.min(player.chips + player.bet, maxTarget);
 
   // Determine available actions
   const canCheck = !facingBet;
   const canCall = facingBet && callAmount > 0;
   const canBet = !facingBet && player.chips > 0;
-  // Can raise only if chips after call cover the minimum raise
-  const canRaise = facingBet && chipsAfterCall >= minRaiseSize;
-  const allinAmount = Math.min(player.chips, Math.max(0, maxTarget - player.bet));
+  // Can raise only if max total bet >= min raise total
+  const canRaise = facingBet && maxTotalBet >= minRaiseTotal;
+  const allinTotalBet = maxTotalBet;
+  const allinAdditional = allinTotalBet - player.bet;
 
   // Fold is always available
   document.getElementById('btn-fold').disabled = false;
@@ -2060,7 +2065,7 @@ function enableActions(player) {
   if (canCall) {
     document.getElementById('btn-call').style.display = '';
     document.getElementById('btn-call').disabled = false;
-    document.getElementById('btn-call').textContent = callAmount >= player.chips ? `オールイン (${callAmount})` : `コール (${callAmount})`;
+    document.getElementById('btn-call').textContent = callAmount >= player.chips ? `オールイン (+${callAmount})` : `コール (+${callAmount})`;
   } else {
     document.getElementById('btn-call').style.display = 'none';
   }
@@ -2070,7 +2075,7 @@ function enableActions(player) {
     document.getElementById('btn-bet').style.display = '';
     document.getElementById('btn-bet').disabled = false;
     if (canRaise) {
-      document.getElementById('btn-bet').textContent = `レイズ (最小${minRaiseSize})`;
+      document.getElementById('btn-bet').textContent = `レイズ`;
     } else {
       document.getElementById('btn-bet').textContent = 'ベット';
     }
@@ -2078,11 +2083,11 @@ function enableActions(player) {
     document.getElementById('btn-bet').style.display = 'none';
   }
 
-  // All-in button: show when meaningful (more than min raise and different from call)
-  if (allinAmount > 0 && player.chips > 1 && allinAmount > callAmount) {
+  // All-in button: show when meaningful
+  if (allinAdditional > 0 && player.chips > 1 && allinAdditional > callAmount) {
     document.getElementById('btn-allin').style.display = '';
     document.getElementById('btn-allin').disabled = false;
-    document.getElementById('btn-allin').textContent = `オールイン (${allinAmount})`;
+    document.getElementById('btn-allin').textContent = `オールイン (${allinAdditional})`;
   } else {
     document.getElementById('btn-allin').style.display = 'none';
   }
@@ -2677,18 +2682,26 @@ document.getElementById('btn-call').addEventListener('click', () => {
 });
 
 document.getElementById('btn-bet').addEventListener('click', () => {
-  // Show bet controls
+  // Show bet controls — values are TOTAL bet amount
   const player = state.players[0];
   const isBet = state.currentBet === 0;
-  const callCost = isBet ? 0 : (state.currentBet - player.bet);
   const maxTarget = getMaxBetTarget(player);
-  // Max raise/bet amount: capped so total bet doesn't exceed opponent's stack
+  // Max total bet: capped by own chips + already bet, and opponent's stack
   const maxTotalBet = Math.min(player.chips + player.bet, maxTarget);
-  const maxBet = Math.max(1, maxTotalBet - player.bet - callCost);
 
-  // Minimum raise: at least the last bet/raise amount
-  const minRaise = isBet ? 1 : Math.max(1, state.lastBetAmount);
-  const effectiveMin = Math.min(minRaise, maxBet);
+  let minTotal, maxTotal;
+  if (isBet) {
+    // ベット: 最小1, 最大=maxTotalBet
+    minTotal = 1;
+    maxTotal = Math.max(1, maxTotalBet);
+  } else {
+    // レイズ: 最小 = currentBet + lastBetAmount (ミニマムレイズ)
+    const minRaiseSize = Math.max(1, state.lastBetAmount);
+    minTotal = state.currentBet + minRaiseSize;
+    maxTotal = maxTotalBet;
+    // チップ不足なら最小を調整
+    if (minTotal > maxTotal) minTotal = maxTotal;
+  }
 
   document.getElementById('bet-controls').style.display = 'flex';
   document.getElementById('btn-fold').style.display = 'none';
@@ -2696,9 +2709,9 @@ document.getElementById('btn-bet').addEventListener('click', () => {
   document.getElementById('btn-bet').style.display = 'none';
   document.getElementById('btn-call').style.display = 'none';
   document.getElementById('btn-allin').style.display = 'none';
-  document.getElementById('bet-amount').value = effectiveMin;
-  document.getElementById('bet-amount').max = maxBet;
-  document.getElementById('bet-amount').min = effectiveMin;
+  document.getElementById('bet-amount').value = minTotal;
+  document.getElementById('bet-amount').max = maxTotal;
+  document.getElementById('bet-amount').min = minTotal;
 });
 
 document.getElementById('btn-bet-plus').addEventListener('click', () => {
@@ -2715,7 +2728,7 @@ document.getElementById('btn-bet-minus').addEventListener('click', () => {
 
 document.getElementById('btn-bet-confirm').addEventListener('click', () => {
   if (!humanResolve) return;
-  const amount = parseInt(document.getElementById('bet-amount').value);
+  const totalAmount = parseInt(document.getElementById('bet-amount').value);
   document.getElementById('bet-controls').style.display = 'none';
   document.getElementById('btn-fold').style.display = '';
   document.getElementById('btn-check').style.display = '';
@@ -2726,9 +2739,11 @@ document.getElementById('btn-bet-confirm').addEventListener('click', () => {
   const resolve = humanResolve;
   humanResolve = null;
   if (isBet) {
-    resolve({ action: 'bet', amount });
+    // ベット: totalAmount = 場に出す額（player.betが0なのでそのまま）
+    resolve({ action: 'bet', amount: totalAmount });
   } else {
-    resolve({ action: 'raise', amount });
+    // レイズ: totalAmount = トータルベット額
+    resolve({ action: 'raise', amount: totalAmount });
   }
 });
 
@@ -2746,16 +2761,16 @@ document.getElementById('btn-allin').addEventListener('click', () => {
   disableActions();
   const player = state.players[0];
   const maxTarget = getMaxBetTarget(player);
-  const allinTotal = Math.min(player.chips, Math.max(0, maxTarget - player.bet));
+  const allinTotalBet = Math.min(player.chips + player.bet, maxTarget);
   const resolve = humanResolve;
   humanResolve = null;
   if (state.currentBet === 0) {
-    resolve({ action: 'bet', amount: allinTotal });
+    // ベット: amount = 場に出す額
+    resolve({ action: 'bet', amount: allinTotalBet });
   } else {
-    const callCost = Math.min(state.currentBet - player.bet, player.chips);
-    const raiseAmount = Math.max(0, allinTotal - callCost);
-    if (raiseAmount > 0) {
-      resolve({ action: 'raise', amount: raiseAmount });
+    if (allinTotalBet > state.currentBet) {
+      // レイズ: amount = トータルベット額
+      resolve({ action: 'raise', amount: allinTotalBet });
     } else {
       resolve({ action: 'call' });
     }

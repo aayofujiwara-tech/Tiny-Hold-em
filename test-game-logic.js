@@ -12,6 +12,7 @@ const {
   calcMaxBet,
   calcCallAmount,
   calcMinRaise,
+  calcMinRaiseTotal,
   processElimination,
 } = require('./game-logic');
 
@@ -392,26 +393,45 @@ console.log(`テスト7: チョップ判定    ${test7Passed === test7Total ? '�
 // ===== テスト8: ミニマムレイズ =====
 console.log('\n--- テスト8: ミニマムレイズ ---');
 let test8Passed = 0;
-let test8Total = 4;
+let test8Total = 7;
 
-runTest('calcMinRaise: lastBetAmount=5 → 最小レイズ5', () => {
+runTest('calcMinRaise: lastBetAmount=5 → 上乗せ幅5', () => {
   const min = calcMinRaise(5);
   assert(min === 5, `expected 5, got ${min}`);
 }) && test8Passed++;
 
-runTest('calcMinRaise: lastBetAmount=0 → 最小レイズ1', () => {
+runTest('calcMinRaise: lastBetAmount=0 → 上乗せ幅1', () => {
   const min = calcMinRaise(0);
   assert(min === 1, `expected 1, got ${min}`);
 }) && test8Passed++;
 
-runTest('calcMinRaise: lastBetAmount=1 → 最小レイズ1', () => {
+runTest('calcMinRaise: lastBetAmount=1 → 上乗せ幅1', () => {
   const min = calcMinRaise(1);
   assert(min === 1, `expected 1, got ${min}`);
 }) && test8Passed++;
 
-runTest('calcMinRaise: lastBetAmount=3 → 最小レイズ3', () => {
+runTest('calcMinRaise: lastBetAmount=3 → 上乗せ幅3', () => {
   const min = calcMinRaise(3);
   assert(min === 3, `expected 3, got ${min}`);
+}) && test8Passed++;
+
+// calcMinRaiseTotal tests
+runTest('calcMinRaiseTotal: bet4,last4 → トータル最小8', () => {
+  // 相手が4ベット → 最小レイズはトータル8 (4+4)
+  const total = calcMinRaiseTotal(4, 4);
+  assert(total === 8, `expected 8, got ${total}`);
+}) && test8Passed++;
+
+runTest('calcMinRaiseTotal: bet8,last4 → トータル最小12', () => {
+  // ベット4→レイズto8(上乗せ4)→再レイズ最小12 (8+4)
+  const total = calcMinRaiseTotal(8, 4);
+  assert(total === 12, `expected 12, got ${total}`);
+}) && test8Passed++;
+
+runTest('calcMinRaiseTotal: bet5,last0 → トータル最小6', () => {
+  // lastBetAmount=0 → 最低1上乗せ → 5+1=6
+  const total = calcMinRaiseTotal(5, 0);
+  assert(total === 6, `expected 6, got ${total}`);
 }) && test8Passed++;
 
 console.log(`テスト8: ミニマムレイズ  ${test8Passed === test8Total ? '✅' : '❌'} ${test8Passed}/${test8Total} passed`);
