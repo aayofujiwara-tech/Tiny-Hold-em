@@ -52,7 +52,7 @@ html, body {
   flex-direction: column;
   height: 100vh;
   height: 100dvh;
-  max-width: 480px;
+  max-width: 500px;
   margin: 0 auto;
   position: relative;
   overflow: hidden;
@@ -99,13 +99,13 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   background:
     radial-gradient(ellipse at center, #143820 0%, var(--table) 60%, #091a10 100%);
   border: 3px solid #1a3a20;
   border-radius: 20px;
   margin: 6px 8px;
-  padding: 8px 8px 6px;
+  padding: 6px 8px 4px;
   position: relative;
   overflow: hidden;
   min-height: 0;
@@ -256,8 +256,8 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex: 1;
-  gap: 8px;
+  flex: 1 1 0;
+  gap: 4px;
   min-height: 0;
 }
 
@@ -276,21 +276,20 @@ html, body {
 
 #pot-display {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 6px;
   background: rgba(0,0,0,0.4);
   border-radius: 10px;
-  padding: 6px 18px;
+  padding: 4px 14px;
 }
 #pot-display .pot-label {
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: var(--gold-dim);
   font-weight: 600;
 }
 #pot-display .pot-value {
   font-family: 'Pirata One', cursive;
-  font-size: 2rem;
+  font-size: 1.6rem;
   color: var(--gold);
   font-weight: 700;
   line-height: 1.1;
@@ -308,12 +307,13 @@ html, body {
 
 #hand-result {
   font-family: 'Pirata One', cursive;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   color: var(--gold);
   text-align: center;
   display: none;
   flex-shrink: 0;
-  padding: 2px 0;
+  padding: 0;
+  line-height: 1.3;
 }
 #hand-result.visible { display: block; }
 
@@ -322,8 +322,8 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 2px 0 2px;
+  gap: 1px;
+  padding: 0;
   flex-shrink: 0;
 }
 
@@ -383,7 +383,7 @@ html, body {
 .action-btn {
   font-family: 'Pirata One', cursive;
   font-size: 1rem;
-  padding: 10px 14px;
+  padding: 10px 10px;
   border: 2px solid;
   border-radius: 8px;
   cursor: pointer;
@@ -395,8 +395,6 @@ html, body {
   flex: 1 1 0;
   max-width: 140px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .action-btn:disabled {
   opacity: 0.3;
@@ -943,44 +941,60 @@ html, body {
   #player-area .card-front .card-suit { font-size: 1.8rem; }
   #player-area .card-front .card-rank { font-size: 1.6rem; }
   #community-card-wrap .card { width: 56px; height: 80px; }
-  .action-btn { padding: 10px 14px; font-size: 1rem; min-width: 64px; min-height: 48px; }
+  .action-btn { padding: 8px 6px; font-size: 0.85rem; min-height: 44px; }
   .cpu-chips { font-size: 1.2rem; }
   #pot-display .pot-value { font-size: 1.6rem; }
   #player-chips-display .chips-value { font-size: 1.3rem; }
-  .bet-adj { width: 38px; height: 38px; }
+  .bet-adj { width: 36px; height: 36px; }
+  #action-bar { gap: 4px; padding: 8px 6px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
 }
 
-/* Standard phones (375px - 430px) */
-@media (min-width: 375px) {
-  #community-card-wrap .card { width: 70px; height: 100px; }
-  #community-card-wrap .card-front .card-suit { font-size: 2rem; }
-  #community-card-wrap .card-front .card-rank { font-size: 1.8rem; }
+/* Standard phones (375px - 480px) */
+@media (min-width: 375px) and (max-width: 480px) {
+  #community-card-wrap .card { width: 66px; height: 94px; }
+  #community-card-wrap .card-front .card-suit { font-size: 1.9rem; }
+  #community-card-wrap .card-front .card-rank { font-size: 1.7rem; }
+  .action-btn { padding: 10px 8px; font-size: 0.95rem; }
+  #action-bar { gap: 5px; }
 }
 
 /* Taller phones — add breathing room */
 @media (min-height: 700px) {
-  #table-area { gap: 8px; }
-  #cpu-area { padding: 4px 0; }
-  #player-area { padding: 6px 0 4px; }
+  #table-area { gap: 6px; }
+  #cpu-area { padding: 2px 0; }
+  #player-area { padding: 4px 0 2px; }
 }
 
 /* Short phones — compact layout */
 @media (max-height: 600px) {
   #header { padding: 4px 10px; }
   #header h1 { font-size: 1.1rem; }
-  #table-area { gap: 2px; padding: 4px 6px 4px; margin: 4px 6px; }
+  #table-area { gap: 1px; padding: 4px 6px 2px; margin: 4px 6px; }
   #player-area .card { width: 66px; height: 94px; }
-  #action-bar { padding: 6px 10px; padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
-  .action-btn { padding: 10px 16px; min-height: 46px; }
+  #action-bar { padding: 6px 6px; padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
+  .action-btn { padding: 8px 8px; min-height: 44px; font-size: 0.9rem; }
+  #pot-display { padding: 4px 12px; }
+  #pot-display .pot-value { font-size: 1.6rem; }
+  #hand-result { font-size: 0.95rem; }
 }
 
-/* PC / Tablet (768px+) */
-@media (min-width: 768px) {
+/* Tablet (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  #app { max-width: 560px; }
+  .action-btn { font-size: 1.05rem; padding: 12px 16px; min-height: 52px; }
+  #action-bar { gap: 8px; }
+  #community-card-wrap .card { width: 80px; height: 112px; }
+  #community-card-wrap .card-front .card-suit { font-size: 2.2rem; }
+  #community-card-wrap .card-front .card-rank { font-size: 1.9rem; }
+}
+
+/* PC (769px+) */
+@media (min-width: 769px) {
   html { font-size: 18px; }
-  #app { max-width: 600px; }
-  .card { width: 100px; height: 140px; }
-  .card-front .card-suit { font-size: 2.4rem; }
-  .card-front .card-rank { font-size: 2.2rem; }
+  #app { max-width: 640px; }
+  .card { width: 80px; height: 112px; }
+  .card-front .card-suit { font-size: 2rem; }
+  .card-front .card-rank { font-size: 1.8rem; }
   #player-area .card { width: 110px; height: 154px; }
   #player-area .card-front .card-suit { font-size: 2.8rem; }
   #player-area .card-front .card-rank { font-size: 2.4rem; }
@@ -990,7 +1004,10 @@ html, body {
   #pot-display .pot-value { font-size: 2.4rem; }
   .cpu-chips { font-size: 1.6rem; }
   #player-chips-display .chips-value { font-size: 2rem; }
-  .action-btn { font-size: 1.2rem; min-height: 56px; padding: 14px 28px; }
+  .action-btn { font-size: 1.15rem; min-height: 56px; padding: 14px 20px; min-width: 120px; }
+  #action-bar { gap: 12px; padding: 12px 16px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+  #hand-result { font-size: 1.3rem; }
+  #table-area { gap: 6px; padding: 10px 12px 8px; }
 }
 /* ===== Tutorial / How-to-Play ===== */
 #tutorial-screen {
