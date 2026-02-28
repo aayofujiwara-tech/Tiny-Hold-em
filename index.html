@@ -734,6 +734,23 @@ html, body {
 }
 
 /* Showdown card display */
+.showdown-community {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.sd-comm-label {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+.sd-card {
+  width: clamp(56px, 9dvh, 110px);
+  height: clamp(78px, 12.5dvh, 154px);
+}
+.sd-card .card-suit { font-size: clamp(1.3rem, 2.8dvh, 2.6rem); }
+.sd-card .card-rank { font-size: clamp(1.1rem, 2.4dvh, 2.2rem); }
 .showdown-hands {
   display: flex;
   justify-content: center;
@@ -749,18 +766,6 @@ html, body {
 .showdown-player .sd-name {
   font-size: 0.95rem;
   color: var(--text-dim);
-}
-.showdown-player .sd-cards {
-  display: flex;
-  gap: 4px;
-  font-size: 2.2rem;
-  line-height: 1;
-}
-.showdown-player .sd-card-label {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--parchment);
-  text-align: center;
 }
 .showdown-player .sd-hand {
   font-family: 'Pirata One', cursive;
@@ -1766,8 +1771,8 @@ const CPU_EASY = {
   },
   weak: {
     noBet:    { bet: 0.1, check: 0.9 },
-    vsBet:    { call: 0.05, raise: 0.0, fold: 0.95 },
-    vsRaise:  { call: 0.0, raise: 0.0, fold: 1.0 },
+    vsBet:    { call: 0.00, raise: 0.0, fold: 1.00 },
+    vsRaise:  { call: 0.00, raise: 0.0, fold: 1.00 },
   },
   betSizing:    { bet: 0.33, raise: 0.50, reraise: 0.60 },
   bluffFreq: 0.05,
@@ -1788,8 +1793,8 @@ const CPU_NORMAL = {
   },
   weak: {
     noBet:    { bet: 0.25, check: 0.75 },
-    vsBet:    { call: 0.10, raise: 0.05, fold: 0.85 },
-    vsRaise:  { call: 0.05, raise: 0.05, fold: 0.90 },
+    vsBet:    { call: 0.00, raise: 0.05, fold: 0.95 },
+    vsRaise:  { call: 0.00, raise: 0.00, fold: 1.00 },
   },
   betSizing:    { bet: 0.50, raise: 0.75, reraise: 0.90 },
   bluffFreq: 0.2,
@@ -1810,7 +1815,7 @@ const CPU_HARD = {
   },
   weak: {
     noBet:    { bet: 0.50, check: 0.50 },
-    vsBet:    { call: 0.05, raise: 0.20, fold: 0.75 },
+    vsBet:    { call: 0.00, raise: 0.20, fold: 0.80 },
     vsRaise:  { call: 0.00, raise: 0.15, fold: 0.85 },
   },
   betSizing:    { bet: 0.75, raise: 1.00, reraise: 1.25 },
@@ -2465,18 +2470,26 @@ async function showResult(winner, handResult, byFold, isChop = false) {
     detailText = '全員フォールドで勝利';
     detailText += `<div class="showdown-pot">ポット獲得: +${state.pot}</div>`;
   } else {
-    // Build showdown card display
+    // Build showdown card display with actual card elements
     const remaining = activePlayers();
     const commSuit = SUITS.find(s => s.id === state.communityCard.suit);
+    const commSuitClass = `suit-${state.communityCard.suit}`;
+
+    // Community card
+    detailText += '<div class="showdown-community">';
+    detailText += `<span class="sd-comm-label">場札</span>`;
+    detailText += `<div class="card face-up sd-card"><div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front ${commSuitClass}"><span class="card-suit">${commSuit.emoji}</span><span class="card-rank">${state.communityCard.display}</span></div></div></div>`;
+    detailText += '</div>';
+
     detailText += '<div class="showdown-hands">';
     for (const p of remaining) {
       const h = classifyHand(p.hand, state.communityCard);
       const suitInfo = SUITS.find(s => s.id === p.hand.suit);
+      const suitClass = `suit-${p.hand.suit}`;
       const isWin = !isChop && p.id === winner.id;
       detailText += `<div class="showdown-player${isWin ? ' winner' : ''}">`;
       detailText += `<span class="sd-name">${p.name}</span>`;
-      detailText += `<span class="sd-cards">${suitInfo.emoji}</span>`;
-      detailText += `<span class="sd-card-label">${p.hand.display}</span>`;
+      detailText += `<div class="card face-up sd-card"><div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front ${suitClass}"><span class="card-suit">${suitInfo.emoji}</span><span class="card-rank">${p.hand.display}</span></div></div></div>`;
       detailText += `<span class="sd-hand">${h.name}</span>`;
       detailText += `</div>`;
     }
