@@ -34,8 +34,7 @@ html {
 }
 
 html, body {
-  height: 100vh;
-  height: 100dvh;
+  height: 100%;
   width: 100%;
   overflow: hidden;
   background: var(--bg);
@@ -44,16 +43,29 @@ html, body {
   font-size: 16px;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ===== Game Wrapper (auto-scaling) ===== */
+.game-wrapper {
+  width: 390px;
+  height: 844px;
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  transform-origin: top center;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 /* ===== Main Layout ===== */
 #app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
-  max-width: 500px;
-  margin: 0 auto;
+  width: 390px;
+  height: 844px;
   position: relative;
   overflow: hidden;
 }
@@ -99,13 +111,13 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   background:
     radial-gradient(ellipse at center, #143820 0%, var(--table) 60%, #091a10 100%);
   border: 3px solid #1a3a20;
   border-radius: 20px;
   margin: 6px 8px;
-  padding: 6px 8px 4px;
+  padding: 8px 8px 6px;
   position: relative;
   overflow: hidden;
   min-height: 0;
@@ -268,11 +280,11 @@ html, body {
 }
 
 #community-card-wrap .card {
-  width: 66px;
-  height: 94px;
+  width: 70px;
+  height: 100px;
 }
-#community-card-wrap .card-front .card-suit { font-size: 1.8rem; }
-#community-card-wrap .card-front .card-rank { font-size: 1.6rem; }
+#community-card-wrap .card-front .card-suit { font-size: 2rem; }
+#community-card-wrap .card-front .card-rank { font-size: 1.8rem; }
 
 #pot-display {
   display: flex;
@@ -370,8 +382,7 @@ html, body {
 #action-bar {
   display: flex;
   gap: 6px;
-  padding: 10px 8px;
-  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  padding: 10px 8px 12px;
   background: rgba(14,31,58,0.97);
   border-top: 1px solid #1a3050;
   flex-shrink: 0;
@@ -930,85 +941,7 @@ html, body {
   line-height: 1.8;
 }
 
-/* ===== Responsive ===== */
-
-/* Very small phones (< 375px, e.g. iPhone SE gen1) */
-@media (max-width: 374px) {
-  .card { width: 48px; height: 68px; }
-  .card-front .card-suit { font-size: 1.3rem; }
-  .card-front .card-rank { font-size: 1.1rem; }
-  #player-area .card { width: 66px; height: 94px; }
-  #player-area .card-front .card-suit { font-size: 1.8rem; }
-  #player-area .card-front .card-rank { font-size: 1.6rem; }
-  #community-card-wrap .card { width: 56px; height: 80px; }
-  .action-btn { padding: 8px 6px; font-size: 0.85rem; min-height: 44px; }
-  .cpu-chips { font-size: 1.2rem; }
-  #pot-display .pot-value { font-size: 1.6rem; }
-  #player-chips-display .chips-value { font-size: 1.3rem; }
-  .bet-adj { width: 36px; height: 36px; }
-  #action-bar { gap: 4px; padding: 8px 6px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
-}
-
-/* Standard phones (375px - 480px) */
-@media (min-width: 375px) and (max-width: 480px) {
-  #community-card-wrap .card { width: 66px; height: 94px; }
-  #community-card-wrap .card-front .card-suit { font-size: 1.9rem; }
-  #community-card-wrap .card-front .card-rank { font-size: 1.7rem; }
-  .action-btn { padding: 10px 8px; font-size: 0.95rem; }
-  #action-bar { gap: 5px; }
-}
-
-/* Taller phones — add breathing room */
-@media (min-height: 700px) {
-  #table-area { gap: 6px; }
-  #cpu-area { padding: 2px 0; }
-  #player-area { padding: 4px 0 2px; }
-}
-
-/* Short phones — compact layout */
-@media (max-height: 600px) {
-  #header { padding: 4px 10px; }
-  #header h1 { font-size: 1.1rem; }
-  #table-area { gap: 1px; padding: 4px 6px 2px; margin: 4px 6px; }
-  #player-area .card { width: 66px; height: 94px; }
-  #action-bar { padding: 6px 6px; padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
-  .action-btn { padding: 8px 8px; min-height: 44px; font-size: 0.9rem; }
-  #pot-display { padding: 4px 12px; }
-  #pot-display .pot-value { font-size: 1.6rem; }
-  #hand-result { font-size: 0.95rem; }
-}
-
-/* Tablet (481px - 768px) */
-@media (min-width: 481px) and (max-width: 768px) {
-  #app { max-width: 560px; }
-  .action-btn { font-size: 1.05rem; padding: 12px 16px; min-height: 52px; }
-  #action-bar { gap: 8px; }
-  #community-card-wrap .card { width: 80px; height: 112px; }
-  #community-card-wrap .card-front .card-suit { font-size: 2.2rem; }
-  #community-card-wrap .card-front .card-rank { font-size: 1.9rem; }
-}
-
-/* PC (769px+) */
-@media (min-width: 769px) {
-  html { font-size: 18px; }
-  #app { max-width: 640px; }
-  .card { width: 80px; height: 112px; }
-  .card-front .card-suit { font-size: 2rem; }
-  .card-front .card-rank { font-size: 1.8rem; }
-  #player-area .card { width: 110px; height: 154px; }
-  #player-area .card-front .card-suit { font-size: 2.8rem; }
-  #player-area .card-front .card-rank { font-size: 2.4rem; }
-  #community-card-wrap .card { width: 100px; height: 140px; }
-  #community-card-wrap .card-front .card-suit { font-size: 2.6rem; }
-  #community-card-wrap .card-front .card-rank { font-size: 2.2rem; }
-  #pot-display .pot-value { font-size: 2.4rem; }
-  .cpu-chips { font-size: 1.6rem; }
-  #player-chips-display .chips-value { font-size: 2rem; }
-  .action-btn { font-size: 1.15rem; min-height: 56px; padding: 14px 20px; min-width: 120px; }
-  #action-bar { gap: 12px; padding: 12px 16px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
-  #hand-result { font-size: 1.3rem; }
-  #table-area { gap: 6px; padding: 10px 12px 8px; }
-}
+/* (No media queries — auto-scaled by JS scaleGame) */
 /* ===== Tutorial / How-to-Play ===== */
 #tutorial-screen {
   position: absolute;
@@ -1268,6 +1201,7 @@ html, body {
 </head>
 <body>
 
+<div class="game-wrapper">
 <div id="app">
   <!-- Header -->
   <div id="header">
@@ -1525,6 +1459,7 @@ html, body {
     </div>
   </div>
 </div>
+</div><!-- /.game-wrapper -->
 
 <script>
 /* ======================================================
@@ -3100,6 +3035,22 @@ document.getElementById('btn-next-set').addEventListener('click', startNextSet);
     closeTutorial();
   });
 })();
+
+// ===== Auto-Scaling =====
+function scaleGame() {
+  const wrapper = document.querySelector('.game-wrapper');
+  if (!wrapper) return;
+  const scaleX = window.innerWidth / 390;
+  const scaleY = window.innerHeight / 844;
+  const scale = Math.min(scaleX, scaleY);
+  wrapper.style.transform = `translateX(-50%) scale(${scale})`;
+}
+
+scaleGame();
+window.addEventListener('resize', scaleGame);
+window.addEventListener('orientationchange', () => {
+  setTimeout(scaleGame, 100);
+});
 
 </script>
 </body>
