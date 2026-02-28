@@ -134,11 +134,13 @@ html, body {
 /* ===== CPU Area ===== */
 #cpu-area {
   display: flex;
+  flex-direction: row;
   justify-content: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 2px 0;
   flex-shrink: 0;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .cpu-slot {
@@ -146,6 +148,9 @@ html, body {
   flex-direction: column;
   align-items: center;
   gap: 2px;
+  min-width: 0;
+  flex: 1 1 0;
+  max-width: 120px;
 }
 .cpu-slot.folded { opacity: 0.35; }
 .cpu-slot.eliminated { display: none; }
@@ -940,189 +945,124 @@ html, body {
 
 /* ===== Mobile Layout (〜600px) ===== */
 @media (max-width: 600px) {
-  #game-wrapper {
-    width: 100vw;
-    height: 100vh;
-    height: 100dvh;
-    overflow: hidden;
-  }
-
   #header {
     height: 48px;
     padding: 0 12px;
   }
 
   #table-area {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    padding: 8px 8px 6px;
-    gap: 4px;
   }
+
+  #cpu-area {
+    gap: 8px;
+    padding: 2px 4px;
+  }
+
+  .cpu-slot .card {
+    width: 52px;
+    height: 74px;
+  }
+  .cpu-slot .card-front .card-suit { font-size: 1.3rem; }
+  .cpu-slot .card-front .card-rank { font-size: 1.1rem; }
 
   #action-bar {
-    flex-shrink: 0;
-    padding: 10px 8px 12px;
     padding-bottom: calc(12px + env(safe-area-inset-bottom));
   }
-
-  .card {
-    width: 56px;
-    height: 80px;
-  }
-  .card-front .card-suit { font-size: 1.6rem; }
-  .card-front .card-rank { font-size: 1.3rem; }
-
-  #player-area .card {
-    width: 80px;
-    height: 112px;
-  }
-  #player-area .card-front .card-suit { font-size: 2.2rem; }
-  #player-area .card-front .card-rank { font-size: 2rem; }
-
-  #community-card-wrap .card {
-    width: 70px;
-    height: 100px;
-  }
-  #community-card-wrap .card-front .card-suit { font-size: 2rem; }
-  #community-card-wrap .card-front .card-rank { font-size: 1.8rem; }
 
   .action-btn {
     flex: 1 1 0;
     max-width: 140px;
-    height: auto;
     min-height: 48px;
-    font-size: 1rem;
+    font-size: 0.9rem;
+    padding: 0 4px;
     white-space: nowrap;
   }
 }
 
 /* ===== PC Layout (601px〜) ===== */
 @media (min-width: 601px) {
-  #game-wrapper {
-    width: 100vw;
-    height: 100vh;
-    height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    background: var(--bg);
-  }
-
   /* ヘッダー */
   #header {
     height: 56px;
-    padding: 0 24px;
+    padding: 0 32px;
     border-bottom: 1px solid rgba(255,255,255,0.1);
   }
-
   #header h1 {
     font-size: 1.5rem;
   }
 
-  /* テーブルエリア：2カラムgrid */
+  /* テーブルエリア：縦1カラム・中央揃え */
   #table-area {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto 1fr;
-    gap: 16px;
-    padding: 24px;
-    max-width: 900px;
-    margin: 0 auto;
-    width: 100%;
-    border-radius: 20px;
-    margin-top: 8px;
-    margin-bottom: 8px;
-  }
-
-  /* フェーズラベル：両カラムにまたがる */
-  #phase-label {
-    grid-column: 1 / -1;
-    text-align: center;
-    font-size: 1.1rem;
-  }
-
-  /* 左カラム：CPU */
-  #cpu-area {
-    grid-column: 1;
-    grid-row: 2;
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
-  }
-
-  /* 右カラム：コミュニティ〜プレイヤー */
-  #community-area {
-    grid-column: 2;
-    grid-row: 2;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
+    padding: 12px 24px;
     gap: 8px;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
   }
 
-  #hand-result {
-    grid-column: 2;
-    grid-row: 3;
-    font-size: 1.2rem;
+  /* CPUエリア：横並び・最大幅制限 */
+  #cpu-area {
+    max-width: 700px;
+    width: 100%;
+    gap: 24px;
+    padding: 4px 16px;
   }
-
-  #player-area {
-    grid-column: 2;
-    grid-row: 4;
+  .cpu-slot {
+    min-width: 0;
+    flex: 1 1 0;
+    max-width: 160px;
   }
 
   /* CPUカード（PC拡大） */
   .cpu-slot .card {
-    width: 72px;
-    height: 100px;
+    width: 80px;
+    height: 112px;
   }
+  .cpu-slot .card-front .card-suit { font-size: 1.7rem; }
+  .cpu-slot .card-front .card-rank { font-size: 1.5rem; }
+
+  .cpu-name { font-size: 1.1rem; }
+  .cpu-chips { font-size: 1.6rem; }
+  .cpu-bet { font-size: 1.3rem; }
 
   /* コミュニティカード（PC拡大） */
   #community-card-wrap .card {
-    width: 90px;
-    height: 126px;
+    width: 110px;
+    height: 154px;
   }
-  #community-card-wrap .card-front .card-suit { font-size: 2.4rem; }
+  #community-card-wrap .card-front .card-suit { font-size: 2.6rem; }
   #community-card-wrap .card-front .card-rank { font-size: 2.2rem; }
+
+  /* POT */
+  #pot-display .pot-value { font-size: 2rem; }
+
+  /* 役名 */
+  #hand-result { font-size: 1.3rem; }
+
+  /* プレイヤーチップ */
+  #player-chips-display .chips-value { font-size: 2rem; }
 
   /* プレイヤーカード（PC拡大） */
   #player-area .card {
     width: 100px;
     height: 140px;
   }
-  #player-area .card-front .card-suit { font-size: 2.8rem; }
-  #player-area .card-front .card-rank { font-size: 2.4rem; }
-
-  /* POT */
-  #pot-display .pot-value {
-    font-size: 2rem;
-  }
-
-  /* チップ */
-  .cpu-chips {
-    font-size: 1.6rem;
-  }
-  #player-chips-display .chips-value {
-    font-size: 2rem;
-  }
+  #player-area .card-front .card-suit { font-size: 2.6rem; }
+  #player-area .card-front .card-rank { font-size: 2.2rem; }
 
   /* ボタンエリア */
   #action-bar {
-    flex-shrink: 0;
-    padding: 12px 24px;
+    padding: 12px 32px;
     justify-content: center;
-    gap: 12px;
+    gap: 16px;
     border-top: 1px solid rgba(255,255,255,0.1);
   }
-
   .action-btn {
-    width: 160px;
-    max-width: 160px;
+    width: 180px;
+    max-width: 180px;
     height: 56px;
     font-size: 1.1rem;
     white-space: nowrap;
@@ -1130,115 +1070,48 @@ html, body {
   }
 
   /* ベットコントロール */
-  #bet-amount {
-    font-size: 1.5rem;
-    width: 52px;
-  }
-  .bet-adj {
-    width: 48px;
-    height: 48px;
-  }
+  #bet-amount { font-size: 1.5rem; width: 52px; }
+  .bet-adj { width: 48px; height: 48px; }
 
-  /* CPUスロット */
-  .cpu-name {
-    font-size: 1.1rem;
-  }
-  .cpu-bet {
-    font-size: 1.3rem;
-  }
-
-  /* オーバーレイ内のカード表示 */
-  .showdown-player .sd-cards {
-    font-size: 2.6rem;
-  }
-  .showdown-player .sd-card-label {
-    font-size: 1.2rem;
-  }
-  .showdown-player .sd-hand {
-    font-size: 1.2rem;
-  }
-
-  /* 結果オーバーレイ */
-  #result-overlay h3 {
-    font-size: 1.8rem;
-  }
-  #result-details {
-    font-size: 1.1rem;
-  }
-
-  /* ゲームオーバー */
-  #gameover-overlay h2 {
-    font-size: 2.4rem;
-  }
-  #gameover-text {
-    font-size: 1.1rem;
-  }
-  #gameover-quote {
-    font-size: 1rem;
-    max-width: 400px;
-  }
-
-  /* ハンドガイド */
-  #hand-guide {
-    max-width: 420px;
-    padding: 20px;
-  }
-
-  /* ゲームログ */
-  #game-log {
-    max-height: 160px;
-    font-size: 1rem;
-  }
+  /* オーバーレイ */
+  .showdown-player .sd-cards { font-size: 2.6rem; }
+  .showdown-player .sd-card-label { font-size: 1.2rem; }
+  .showdown-player .sd-hand { font-size: 1.2rem; }
+  #result-overlay h3 { font-size: 1.8rem; }
+  #result-details { font-size: 1.1rem; }
+  #gameover-overlay h2 { font-size: 2.4rem; }
+  #gameover-text { font-size: 1.1rem; }
+  #gameover-quote { font-size: 1rem; max-width: 400px; }
+  #hand-guide { max-width: 420px; padding: 20px; }
+  #game-log { max-height: 160px; font-size: 1rem; }
 
   /* タイトル画面 PC対応 */
   #start-screen {
     padding: 40px 24px;
   }
-  #start-screen h2 {
-    font-size: 2.8rem;
-  }
-  #start-screen p {
-    font-size: 1rem;
-    max-width: 400px;
-  }
-
+  #start-screen h2 { font-size: 2.8rem; }
+  #start-screen p { font-size: 1rem; max-width: 400px; }
   .step-btn {
     min-width: 160px;
-    padding: 16px 24px;
+    padding: 16px 32px;
     font-size: 1.1rem;
   }
-
   .mode-card {
     min-width: 160px;
     padding: 18px 20px;
   }
-  .mode-card-icon {
-    font-size: 1.8rem;
-  }
-  .mode-card-title {
-    font-size: 1.1rem;
-  }
-
-  .pirate-btn {
-    font-size: 1.3rem;
-    padding: 16px 36px;
-  }
+  .mode-card-icon { font-size: 1.8rem; }
+  .mode-card-title { font-size: 1.1rem; }
+  .pirate-btn { font-size: 1.3rem; padding: 16px 36px; }
   #btn-start {
-    max-width: 300px;
-    min-height: 60px;
+    max-width: 320px;
+    min-height: 64px;
     font-size: 1.2rem;
   }
-
-  /* 遊び方ボタン */
-  #btn-howto {
-    font-size: 1.1rem;
-    padding: 12px 28px;
-  }
+  #btn-howto { font-size: 1.1rem; padding: 12px 28px; }
 
   /* チュートリアル PC */
-  .tutorial-step h3 {
-    font-size: 1.5rem;
-  }
+  .tutorial-step h3 { font-size: 1.5rem; }
   .tutorial-step p, .tutorial-step .tut-text {
     font-size: 1rem;
     max-width: 500px;
