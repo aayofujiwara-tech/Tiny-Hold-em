@@ -1747,26 +1747,29 @@ function calcScore(myCard, communityCard) {
 }
 
 function getStrengthTier(score) {
-  if (score >= 85) return 'strong';
-  if (score >= 55) return 'medium';
-  return 'weak';
+  if (score >= 70) return 'strong';   // バディ(70), ストフラ(85), ロイヤル(100)
+  if (score >= 55) return 'medium';   // フラ(55)
+  return 'weak';                       // スト(40), ハイカード(20)
 }
 
 // Level 1: ひよっこ海賊 (beginner)
 const CPU_EASY = {
   strong: {
-    noBet:  { bet: 0.5, check: 0.5 },
-    vsBet:  { call: 0.7, raise: 0.1, fold: 0.2 },
+    noBet:    { bet: 0.6, check: 0.4 },
+    vsBet:    { call: 0.7, raise: 0.2, fold: 0.1 },
+    vsRaise:  { call: 0.8, raise: 0.1, fold: 0.1 },
   },
   medium: {
-    noBet:  { bet: 0.3, check: 0.7 },
-    vsBet:  { call: 0.4, raise: 0.0, fold: 0.6 },
+    noBet:    { bet: 0.3, check: 0.7 },
+    vsBet:    { call: 0.5, raise: 0.0, fold: 0.5 },
+    vsRaise:  { call: 0.4, raise: 0.0, fold: 0.6 },
   },
   weak: {
-    noBet:  { bet: 0.1, check: 0.9 },
-    vsBet:  { call: 0.1, raise: 0.0, fold: 0.9 },
+    noBet:    { bet: 0.1, check: 0.9 },
+    vsBet:    { call: 0.1, raise: 0.0, fold: 0.9 },
+    vsRaise:  { call: 0.1, raise: 0.0, fold: 0.9 },
   },
-  betSizing: 0.3,
+  betSizing:    { bet: 0.33, raise: 0.50, reraise: 0.60 },
   bluffFreq: 0.05,
   mdfAdherence: 0.5,
 };
@@ -1774,18 +1777,21 @@ const CPU_EASY = {
 // Level 2: 一人前の海賊 (normal, default)
 const CPU_NORMAL = {
   strong: {
-    noBet:  { bet: 0.8, check: 0.2 },
-    vsBet:  { call: 0.4, raise: 0.6, fold: 0.0 },
+    noBet:    { bet: 0.85, check: 0.15 },
+    vsBet:    { call: 0.45, raise: 0.55, fold: 0.00 },
+    vsRaise:  { call: 0.55, raise: 0.45, fold: 0.00 },
   },
   medium: {
-    noBet:  { bet: 0.5, check: 0.5 },
-    vsBet:  { call: 0.6, raise: 0.2, fold: 0.2 },
+    noBet:    { bet: 0.55, check: 0.45 },
+    vsBet:    { call: 0.60, raise: 0.25, fold: 0.15 },
+    vsRaise:  { call: 0.65, raise: 0.15, fold: 0.20 },
   },
   weak: {
-    noBet:  { bet: 0.2, check: 0.8 },
-    vsBet:  { call: 0.35, raise: 0.0, fold: 0.65 },
+    noBet:    { bet: 0.25, check: 0.75 },
+    vsBet:    { call: 0.35, raise: 0.05, fold: 0.60 },
+    vsRaise:  { call: 0.25, raise: 0.05, fold: 0.70 },
   },
-  betSizing: 0.5,
+  betSizing:    { bet: 0.50, raise: 0.75, reraise: 0.90 },
   bluffFreq: 0.2,
   mdfAdherence: 0.8,
 };
@@ -1793,18 +1799,21 @@ const CPU_NORMAL = {
 // Level 3: 海賊船長 (hard)
 const CPU_HARD = {
   strong: {
-    noBet:  { bet: 0.9, check: 0.1 },
-    vsBet:  { call: 0.2, raise: 0.8, fold: 0.0 },
+    noBet:    { bet: 0.90, check: 0.10 },
+    vsBet:    { call: 0.25, raise: 0.75, fold: 0.00 },
+    vsRaise:  { call: 0.35, raise: 0.65, fold: 0.00 },
   },
   medium: {
-    noBet:  { bet: 0.65, check: 0.35 },
-    vsBet:  { call: 0.65, raise: 0.25, fold: 0.1 },
+    noBet:    { bet: 0.70, check: 0.30 },
+    vsBet:    { call: 0.50, raise: 0.40, fold: 0.10 },
+    vsRaise:  { call: 0.60, raise: 0.25, fold: 0.15 },
   },
   weak: {
-    noBet:  { bet: 0.35, check: 0.65 },
-    vsBet:  { call: 0.4, raise: 0.1, fold: 0.5 },
+    noBet:    { bet: 0.40, check: 0.60 },
+    vsBet:    { call: 0.35, raise: 0.15, fold: 0.50 },
+    vsRaise:  { call: 0.30, raise: 0.10, fold: 0.60 },
   },
-  betSizing: 0.75,
+  betSizing:    { bet: 0.75, raise: 1.00, reraise: 1.25 },
   bluffFreq: 0.35,
   mdfAdherence: 1.0,
 };
@@ -1820,14 +1829,39 @@ function calcMDF(pot, betAmount) {
   return pot / (pot + betAmount);
 }
 
-// GTO-based bet sizing: pot percentage
-function calcCpuBetAmount(level, pot, cpuChips, opponentChips, isRaise, currentBet) {
-  let amount = Math.max(1, Math.round(pot * level.betSizing));
-  if (isRaise) {
-    amount = currentBet + Math.max(1, Math.round(pot * level.betSizing));
-  }
-  const maxAmount = Math.min(cpuChips, opponentChips);
-  return Math.min(amount, maxAmount);
+// Bet sizing: pot-based amount for CPU bets
+function cpuBetAmount(level, pot, cpuChips, opponentChips) {
+  const sizing = level.betSizing.bet;
+  const amount = Math.max(1, Math.round(pot * sizing));
+  return Math.min(amount, cpuChips, opponentChips);
+}
+
+// Raise sizing: currentBet + pot-based raise-by
+function cpuRaiseAmount(level, pot, currentBet, lastBetAmount, cpuChips, playerBet, opponentChips) {
+  const sizing = level.betSizing.raise;
+  const minRaiseSize = Math.max(1, lastBetAmount);
+  const minRaiseTotal = currentBet + minRaiseSize;
+  const potRaise = currentBet + Math.max(1, Math.round(pot * sizing));
+  const amount = Math.max(minRaiseTotal, potRaise);
+  return Math.min(amount, cpuChips + playerBet, opponentChips);
+}
+
+// Re-raise sizing: stronger than raise
+function cpuReraiseAmount(level, pot, currentBet, lastBetAmount, cpuChips, playerBet, opponentChips) {
+  const sizing = level.betSizing.reraise;
+  const minRaiseSize = Math.max(1, lastBetAmount);
+  const minRaiseTotal = currentBet + minRaiseSize;
+  const potReraise = currentBet + Math.max(1, Math.round(pot * sizing));
+  const amount = Math.max(minRaiseTotal, potReraise);
+  return Math.min(amount, cpuChips + playerBet, opponentChips);
+}
+
+// Detect scenario: noBet / vsRaise / vsBet
+function getCpuScenario(currentBet, lastRaiserIndex, playerIndex) {
+  if (currentBet === 0) return 'noBet';
+  // If the last raiser is the human player, this is vsRaise
+  if (lastRaiserIndex === playerIndex) return 'vsRaise';
+  return 'vsBet';
 }
 
 function cpuDecide(player, canCheck, currentBet, communityCard) {
@@ -1843,7 +1877,12 @@ function cpuDecide(player, canCheck, currentBet, communityCard) {
   const opponents = state.players.filter(p => p.id !== player.id && !p.eliminated && !p.folded);
   const opponentChips = opponents.length > 0 ? Math.max(...opponents.map(p => p.chips + p.bet)) : player.chips;
 
-  if (currentBet === 0) {
+  // Find human player index for vsRaise detection
+  const humanPlayer = state.players.find(p => p.isHuman);
+  const humanIndex = humanPlayer ? humanPlayer.id : 0;
+  const scenario = getCpuScenario(currentBet, state.lastRaiserIndex, humanIndex);
+
+  if (scenario === 'noBet') {
     // === No bet to face ===
     const probs = tierConfig.noBet;
 
@@ -1854,22 +1893,21 @@ function cpuDecide(player, canCheck, currentBet, communityCard) {
     }
 
     if (roll < betProb) {
-      // Bet
-      let amount = calcCpuBetAmount(level, state.pot, player.chips, opponentChips, false, 0);
+      let amount = cpuBetAmount(level, state.pot, player.chips, opponentChips);
       amount = Math.min(amount, maxTarget - player.bet);
       return amount > 0 ? { action: 'bet', amount } : { action: 'check' };
     }
     return { action: 'check' };
   } else {
-    // === Facing a bet ===
-    let probs = { ...tierConfig.vsBet };
+    // === Facing a bet or raise ===
+    const probTable = scenario === 'vsRaise' ? tierConfig.vsRaise : tierConfig.vsBet;
+    let probs = { ...probTable };
 
     // Apply MDF adjustment: ensure we don't fold too much
     const mdf = calcMDF(state.pot, callAmount);
     const adjustedMDF = mdf * level.mdfAdherence;
     const defenseFreq = probs.call + probs.raise;
     if (defenseFreq < adjustedMDF && probs.fold > 0) {
-      // Boost call probability to meet MDF
       const deficit = adjustedMDF - defenseFreq;
       probs.call = Math.min(1.0, probs.call + deficit);
       probs.fold = Math.max(0, 1.0 - probs.call - probs.raise);
@@ -1878,14 +1916,17 @@ function cpuDecide(player, canCheck, currentBet, communityCard) {
     if (roll < probs.call) {
       return { action: 'call' };
     } else if (roll < probs.call + probs.raise) {
-      // Raise — amount is TOTAL bet target
+      // Raise/Re-raise — amount is TOTAL bet target
       const minRaiseSize = Math.max(1, state.lastBetAmount);
       const minRaiseTotal = currentBet + minRaiseSize;
       const maxTotalBet = Math.min(player.chips + player.bet, maxTarget);
       if (maxTotalBet >= minRaiseTotal) {
-        // Calculate raise-by amount based on pot sizing, then convert to total
-        const raiseBy = calcCpuBetAmount(level, state.pot, player.chips - callAmount, opponentChips, false, 0);
-        let targetTotal = currentBet + Math.max(raiseBy, minRaiseSize);
+        let targetTotal;
+        if (scenario === 'vsRaise') {
+          targetTotal = cpuReraiseAmount(level, state.pot, currentBet, state.lastBetAmount, player.chips, player.bet, opponentChips);
+        } else {
+          targetTotal = cpuRaiseAmount(level, state.pot, currentBet, state.lastBetAmount, player.chips, player.bet, opponentChips);
+        }
         targetTotal = Math.max(targetTotal, minRaiseTotal);
         targetTotal = Math.min(targetTotal, maxTotalBet);
         return targetTotal > currentBet ? { action: 'raise', amount: targetTotal } : { action: 'call' };
